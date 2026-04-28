@@ -1,60 +1,28 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import EmailStr, BaseModel
 from datetime import datetime, timedelta, timezone
+from typing import Optional, Annotated
 
 import jwt
 import schemas
-
-from typing import Optional
-
-# Import Supabase
-from database import supabase
-
-app = FastAPI(title="CSIT314 Backend - IAM Module (Supabase)")
-
-# ====================== Configuration ======================
-SECRET_KEY = "CSIT314_2026_SUPER_SECRET_KEY_CHANGE_THIS_IN_PRODUCTION_!@#$"  # Recommended to load from .env
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Recommended to set to 60 minutes
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-# ====================== Password Handling ======================
 import bcrypt
 
+from database import supabase
 
-def get_password_hash(password: str) -> str:
-    """Hash the password (recommended approach)"""
-    # Convert password to bytes and hash it
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-    return hashed.decode('utf-8')
+app = FastAPI(title="CSIT314 Backend - IAM Module (User Stories 1-12)")
 
+# ====================== Configuration ======================
+SECRET_KEY = "CSIT314_2026_SUPER_SECRET_KEY_CHANGE_THIS_IN_PRODUCTION_!@#$"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-def verify_password(plain_password: str, password_hash: str) -> bool:
-    """Verify if the password is correct"""
-    try:
-        return bcrypt.checkpw(
-            plain_password.encode('utf-8'),
-            password_hash.encode('utf-8')
-        )
-    except Exception:
-        return False
+# ====================== 使用纯 Bearer Token 认证（推荐方式） ======================
+security = HTTPBearer()
 
-
-def create_access_token(data: dict):
-    """Generate JWT token"""
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-# ====================== Get Current Logged-in User ======================
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Validate token and return current user information"""
+def get_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
+    """Validate Bearer Token and return current user"""
+    token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid credentials or token expired",
@@ -68,176 +36,286 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except jwt.PyJWTError:
         raise credentials_exception
 
-    # Query user from Supabase
     response = supabase.table("users").select("*").eq("email", email).execute()
     if not response.data:
         raise credentials_exception
 
-    user = response.data[0]
-    return user
+    return response.data[0]
 
 
-# ====================== Pydantic Data Models ======================
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    username: str  # Corresponds to the username field in database
-    phone_number: Optional[str] = None
+def get_current_admin(current_user: dict = Depends(get_current_user)):
+    """Only allow Admin (role_id = 0)"""
+    if current_user.get("role_id") != 0:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
 
 
-class UserResponse(BaseModel):
-    user_id: int
-    username: str
-    email: EmailStr
-    role_id: Optional[int] = None
-    status: str
-    created_at: Optional[datetime] = None
+# ====================== Password Handling ======================
+def get_password_hash(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-
-# ===========================================
-# 1. Register API
-# ===========================================
-@app.post("/auth/register", response_model=schemas.UserResponse)
-def register_user(user: schemas.UserCreate):
-    # 1. Check if the email address has already been registered.
-    response = supabase.table("users").select("*").eq("email", user.email).execute()
-    if len(response.data) > 0:
-        raise HTTPException(status_code=400, detail="邮箱已被注册！")
-
-    # 2. Encryption Password
-    hashed_pwd = get_password_hash(user.password)
-
-    # 3. Construct the data to be stored in the database
-    new_user_data = {
-        "email": user.email,
-        "password_hash": hashed_pwd,
-        "username": user.username,
-        "phone_number": user.phone_number,
-        "role": schemas.UserRole.DONEE.value,
-        "status": schemas.UserStatus.PENDING.value
-    }
-
-    # 4. Perform the insert operation and catch errors.
+def verify_password(plain_password: str, password_hash: str) -> bool:
     try:
-        insert_response = supabase.table("users").insert(new_user_data).execute()
-    except Exception as e:
-        # If there are other incorrect column names in the database, the error will be clearly returned to the webpage here.
-        raise HTTPException(status_code=500, detail=f"Database insertion failed: {str(e)}")
-
-    if not insert_response.data:
-        raise HTTPException(status_code=500, detail="Registration failed, no data returned from the database.")
-
-    return insert_response.data[0]
-
-# ===========================================
-# 2. Login API
-# ===========================================
-@app.post("/auth/login", response_model=Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """User login"""
-    # Find user by email
-    response = supabase.table("users").select("*").eq("email", form_data.username).execute()
-    user = response.data[0] if response.data else None
-
-    if not user or not verify_password(form_data.password, user.get("password_hash")):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Check account status
-    if user.get("status") in ["Suspended", "suspended"]:
-        raise HTTPException(status_code=403, detail="Account is suspended, please contact admin")
-
-    # Generate token
-    access_token = create_access_token(data={"sub": user["email"]})
-
-    return {"access_token": access_token, "token_type": "bearer"}
+        return bcrypt.checkpw(plain_password.encode('utf-8'), password_hash.encode('utf-8'))
+    except Exception:
+        return False
 
 
-# ===========================================
-# 3. View Profile (Requires Login)
-# ===========================================
-@app.get("/profile", response_model=UserResponse)
-def read_users_me(current_user: dict = Depends(get_current_user)):
-    """Get current logged-in user's information"""
-    return {
-        "user_id": current_user.get("user_id"),
-        "username": current_user.get("username"),
-        "email": current_user.get("email"),
-        "role_id": current_user.get("role_id"),
-        "status": current_user.get("status"),
-        "created_at": current_user.get("created_at")
-    }
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# Root health check
-@app.get("/")
-def root():
-    return {"message": "CSIT314 Backend is running successfully! (Supabase + FastAPI)"}
-
-# ===========================================
-# 4. Helper: Audit Log Generator (Story 12)
-# ===========================================
+# ====================== Audit Log Helper (Story 12) ======================
 def log_admin_action(admin_id: int, target_user_id: int, action: str, details: str = ""):
     log_data = {
         "admin_id": admin_id,
         "target_user_id": target_user_id,
         "action": action,
-        "details": details
+        "details": details,
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
     supabase.table("audit_logs").insert(log_data).execute()
 
 
 # ===========================================
-# 5. Admin Feature: Suspend User and Log Action (Story 11 & Story 12)
+# 1. Register (User Story 9)
 # ===========================================
-@app.post("/admin/users/{target_user_id}/suspend")
-def suspend_user(target_user_id: int):
-    # a. Update user status in Supabase
-    update_res = supabase.table("users").update({"status": "suspended"}).eq("id", target_user_id).execute()
+@app.post("/auth/register", response_model=schemas.UserResponse)
+def register_user(user: schemas.UserCreate):
+    existing = supabase.table("users").select("user_id").eq("email", user.email).execute()
+    if existing.data:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-    if len(update_res.data) == 0:
+    initial_status = "Pending" if user.role_id == 2 else "Active"
+
+    new_user_data = {
+        "username": user.username,
+        "email": user.email,
+        "password_hash": get_password_hash(user.password),
+        "role_id": user.role_id,
+        "status": initial_status,
+        "is_suspended": False,
+        "phone_number": user.phone_number,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    response = supabase.table("users").insert(new_user_data).execute()
+    if not response.data:
+        raise HTTPException(status_code=500, detail="Failed to create user")
+
+    return response.data[0]
+
+
+# ===========================================
+# 2. Login - 使用 email + password JSON Body (User Story 1)
+# ===========================================
+@app.post("/auth/login", response_model=schemas.Token)
+def login_for_access_token(login_data: schemas.LoginRequest):
+    """使用邮箱和密码登录"""
+    response = supabase.table("users").select("*").eq("email", login_data.email).execute()
+    user = response.data[0] if response.data else None
+
+    if not user or not verify_password(login_data.password, user.get("password_hash")):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if user.get("is_suspended") or user.get("status") in ["Suspended", "suspended"]:
+        raise HTTPException(status_code=403, detail="Account is suspended. Please contact admin.")
+
+    access_token = create_access_token(data={"sub": user["email"]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+# ===========================================
+# 3. Logout (User Story 2)
+# ===========================================
+@app.post("/auth/logout")
+def logout():
+    return {"message": "Successfully logged out. Please discard your token."}
+
+
+# ===========================================
+# 4. View Personal Profile (User Story 3)
+# ===========================================
+@app.get("/profile", response_model=schemas.UserResponse)
+def read_users_me(current_user: dict = Depends(get_current_user)):
+    return {
+        "user_id": current_user.get("user_id"),
+        "email": current_user.get("email"),
+        "username": current_user.get("username"),
+        "role_id": current_user.get("role_id"),
+        "status": current_user.get("status"),
+        "phone_number": current_user.get("phone_number"),
+        "created_at": current_user.get("created_at")
+    }
+
+
+# ===========================================
+# 5. Update Personal Profile (User Story 4)
+# ===========================================
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    phone_number: Optional[str] = None
+
+@app.patch("/profile", response_model=schemas.UserResponse)
+def update_profile(update_data: UserUpdate, current_user: dict = Depends(get_current_user)):
+    update_dict = update_data.dict(exclude_unset=True)
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No update data provided")
+
+    res = supabase.table("users").update(update_dict).eq("user_id", current_user["user_id"]).execute()
+    
+    if not res.data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # b. Log admin action (assuming admin ID = 1)
-    log_admin_action(
-        admin_id=1,
-        target_user_id=target_user_id,
-        action="SUSPEND_USER",
-        details="Admin manually suspended this account"
-    )
-
-    return {"message": "User successfully suspended and logged in audit logs"}
+    updated = supabase.table("users").select("*").eq("user_id", current_user["user_id"]).execute().data[0]
+    return updated
 
 
 # ===========================================
-# 6. [Supplementary] Administrator Function: Approving Users (Story 10)
+# Password Reset (Story 5) - 简化版
 # ===========================================
-@app.post("/admin/users/{target_user_id}/approve")
-def approve_user(target_user_id: int):
-    # Change the status from pending to active
-    update_res = supabase.table("users").update({"status": "active"}).eq("user_id", target_user_id).execute()
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
 
-    if len(update_res.data) == 0:
-        raise HTTPException(status_code=404, detail="The user awaiting approval could not be found.")
+@app.post("/auth/forgot-password")
+def forgot_password(request: PasswordResetRequest):
+    return {"message": f"Password reset link has been sent to {request.email} (simulation)"}
 
-    # Record audit logs (Story 12)
-    log_admin_action(admin_id=1, target_user_id=target_user_id, action="APPROVE_USER", details="The administrator approved the user's application.")
+class PasswordReset(BaseModel):
+    token: str
+    new_password: str
 
-    return {"message": "User has been successfully activated."}
+@app.post("/auth/reset-password")
+def reset_password(reset: PasswordReset):
+    try:
+        payload = jwt.decode(reset.token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+    except:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    hashed = get_password_hash(reset.new_password)
+    res = supabase.table("users").update({"password_hash": hashed}).eq("email", email).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "Password has been successfully reset"}
+
 
 # ===========================================
-# 7. [Supplementary] Administrator Function: View Audit Logs (Story 12)
+# Admin Features (Stories 6-12)
 # ===========================================
-@app.get("/admin/audit-logs")
-def get_audit_logs():
-    # Read all operation records from Supabase
-    response = supabase.table("audit_logs").select("*").order("id", desc=True).execute()
+
+class AdminCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    phone_number: Optional[str] = None
+
+@app.post("/admin/create-admin", response_model=schemas.UserResponse)
+def create_admin(admin_data: AdminCreate, current_admin: dict = Depends(get_current_admin)):
+    existing = supabase.table("users").select("user_id").eq("email", admin_data.email).execute()
+    if existing.data:
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    new_admin = {
+        "username": admin_data.username,
+        "email": admin_data.email,
+        "password_hash": get_password_hash(admin_data.password),
+        "role_id": 0,
+        "status": "Active",
+        "is_suspended": False,
+        "phone_number": admin_data.phone_number,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    response = supabase.table("users").insert(new_admin).execute()
+    return response.data[0]
+
+
+@app.get("/admin/users")
+def admin_search_users(
+    email: Optional[str] = Query(None),
+    username: Optional[str] = Query(None),
+    role_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    current_admin: dict = Depends(get_current_admin)
+):
+    query = supabase.table("users").select("*")
+    if email:
+        query = query.eq("email", email)
+    if username:
+        query = query.ilike("username", f"%{username}%")
+    if role_id is not None:
+        query = query.eq("role_id", role_id)
+    if status:
+        query = query.eq("status", status)
+
+    response = query.order("created_at", desc=True).execute()
     return response.data
+
+
+class AdminUserUpdate(BaseModel):
+    username: Optional[str] = None
+    phone_number: Optional[str] = None
+    status: Optional[str] = None
+
+@app.patch("/admin/users/{user_id}")
+def admin_update_user(user_id: int, update_data: AdminUserUpdate, current_admin: dict = Depends(get_current_admin)):
+    update_dict = update_data.dict(exclude_unset=True)
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No data to update")
+
+    res = supabase.table("users").update(update_dict).eq("user_id", user_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    log_admin_action(current_admin["user_id"], user_id, "UPDATE_USER_INFO", f"Updated fields: {list(update_dict.keys())}")
+    return {"message": "User updated successfully"}
+
+
+@app.post("/admin/approve/{user_id}")
+def approve_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
+    res = supabase.table("users").update({"status": "Active", "is_suspended": False}).eq("user_id", user_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    log_admin_action(current_admin["user_id"], user_id, "APPROVE_USER", "User approved")
+    return {"message": "User has been approved and activated"}
+
+
+@app.post("/admin/users/{user_id}/suspend")
+def suspend_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
+    res = supabase.table("users").update({"status": "Suspended", "is_suspended": True}).eq("user_id", user_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    log_admin_action(current_admin["user_id"], user_id, "SUSPEND_USER", "Account suspended by admin")
+    return {"message": "User has been suspended"}
+
+
+@app.post("/admin/users/{user_id}/reactivate")
+def reactivate_user(user_id: int, current_admin: dict = Depends(get_current_admin)):
+    res = supabase.table("users").update({"status": "Active", "is_suspended": False}).eq("user_id", user_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    log_admin_action(current_admin["user_id"], user_id, "REACTIVATE_USER", "Account reactivated by admin")
+    return {"message": "User has been reactivated"}
+
+
+@app.get("/admin/audit-logs")
+def get_audit_logs(current_admin: dict = Depends(get_current_admin)):
+    response = supabase.table("audit_logs").select("*").order("created_at", desc=True).execute()
+    return response.data
+
+
+# Health Check
+@app.get("/")
+def root():
+    return {"message": "Backend IAM Module (Stories 1-12) is running - Pure Bearer Token Auth"}
