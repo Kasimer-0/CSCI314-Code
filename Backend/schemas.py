@@ -48,7 +48,7 @@ class AdminUserUpdate(BaseModel):
 # ================= （Sprint 2）FSA (Fundraising Activity) =================
 class ActivityCreate(BaseModel):
     title: str = Field(..., min_length=5, max_length=100, description="The event title must be at least 5 characters.")
-    description: str = Field(..., min_length=20, description="The event description must be at least 20 characters.")
+    description: str = Field(..., min_length=10, description="The event description must be at least 10 characters.")
     category_id: int = Field(..., gt=0)
     target_amount: float = Field(..., gt=10, description="The target amount must be greater than 10.")
     is_private: bool = False
