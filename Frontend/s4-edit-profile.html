@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile · Fundraising System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#F8FAFC] min-h-screen text-slate-800 font-inter">
+
+    <!-- 动态导航栏容器 -->
+    <header id="dynamicHeader" class="bg-white border-b border-slate-200 px-8 py-3 flex justify-between items-center sticky top-0 z-30"></header>
+
+    <main class="w-full max-w-3xl mx-auto px-6 py-10">
+        <div class="mb-8">
+            <p class="text-sm text-slate-500"><a href="s3-view-profile.html" class="hover:text-blue-600">Profile</a> <span class="mx-1.5 text-slate-400">/</span> <span class="text-slate-900 font-semibold">Edit Profile</span></p>
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight mt-1">Edit your profile</h1>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <!-- 这里是你原本的表单内容，保持不变即可 -->
+            <form id="editProfileForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                        <input id="usernameInput" type="text" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                        <input id="phoneInput" type="text" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="window.location.href='s3-view-profile.html'" class="px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Logout modal 同样需要保留 -->
+    <div id="logoutModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+            <h3 class="text-xl font-bold text-slate-900">Sign out?</h3>
+            <div class="grid grid-cols-2 gap-3 mt-6">
+                <button id="logoutCancel" class="px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50">Cancel</button>
+                <button id="logoutConfirm" class="px-5 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700">Sign out</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="logout.js"></script>
+    <script src="s4-edit-profile.js"></script>
+</body>
+</html>
