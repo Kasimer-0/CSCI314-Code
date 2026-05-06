@@ -1,16 +1,23 @@
 import os
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+# Read the database connection string we just set in .env
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("❌ Please check the SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the .env file")
+if not DATABASE_URL:
+    raise ValueError("❌ Please check the DATABASE_URL in the .env file")
 
-# Create Supabase client (backend-only)
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Create SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
 
-print("✅ Supabase database connection initialized (using service_role key)")
+# Create database session factory (SessionLocal)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base class for all ORM models (used when creating tables)
+Base = declarative_base()
+
+print("✅ Local PostgreSQL database connection initialized")

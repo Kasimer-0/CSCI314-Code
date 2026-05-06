@@ -1,14 +1,15 @@
-# Entities/user_profile.py
+# [Replaced] Entities/user_profile.py
 
 from pydantic import BaseModel
 from typing import Optional
-from database import supabase
+from sqlalchemy.orm import Session
+from models import UserProfile, UserAccount
 
 # ==========================================
 # 1. Pydantic Models (Data Validation)
 # ==========================================
 class UserProfileCreate(BaseModel):
-    user_id: int  
+    account_id: int
     username: str
     phone_number: Optional[str] = None
     role_id: int
@@ -23,62 +24,63 @@ class UserProfileUpdate(BaseModel):
 class UserProfileEntity:
 
     @staticmethod
-    def create_profile(profile_data: UserProfileCreate):
+    def create_profile(db: Session, profile_data: UserProfileCreate):
         """Entity Logic (Story 1): Link profile data to an existing account"""
-        existing_account = supabase.table("users").select("user_id, username").eq("user_id", profile_data.user_id).execute()
-        if not existing_account.data:
+        # 1. Check if Account exists
+        account = db.query(UserAccount).filter(UserAccount.account_id == profile_data.account_id).first()
+        if not account:
             return None, "User account not found. Please create an account first."
         
-        # If the placeholder is already changed, it means profile exists
-        if existing_account.data[0].get("username") and existing_account.data[0].get("username") != "Pending Setup":
+        # 2. Check if Profile already exists for this Account
+        existing_profile = db.query(UserProfile).filter(UserProfile.account_id == profile_data.account_id).first()
+        if existing_profile:
             return None, "Profile already exists for this account."
 
-        update_dict = {
-            "username": profile_data.username,
-            "phone_number": profile_data.phone_number,
-            "role_id": profile_data.role_id,
-            "status": "Active" # Activate account after profile creation
-        }
-        res = supabase.table("users").update(update_dict).eq("user_id", profile_data.user_id).execute()
-        if not res.data:
-            return None, "Failed to create user profile."
-        return res.data[0], None
+        # 3. Create Profile
+        new_profile = UserProfile(
+            account_id=profile_data.account_id,
+            username=profile_data.username,
+            phone_number=profile_data.phone_number,
+            role_id=profile_data.role_id
+        )
+        db.add(new_profile)
+        
+        # 4. Refresh Activate Account status
+        account.status = "Active"
+        
+        db.commit()
+        db.refresh(new_profile)
+        
+        return new_profile, None
 
     @staticmethod
-    def get_profile(user_id: int):
+    def get_profile(db: Session, profile_id: int):
         """Entity Logic (Story 2): View user profile"""
-        res = supabase.table("users").select("user_id, username, phone_number, role_id").eq("user_id", user_id).execute()
-        if not res.data:
+        profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
+        if not profile:
             return None, "User profile not found."
-        return res.data[0], None
+        return profile, None
 
     @staticmethod
-    def update_profile(user_id: int, update_data: UserProfileUpdate):
+    def update_profile(db: Session, profile_id: int, update_data: UserProfileUpdate):
         """Entity Logic (Story 3): Update user profile"""
-        data_dict = update_data.dict(exclude_unset=True)
-        if not data_dict:
-            return None, "No data provided for update."
+        profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
+        if not profile:
+            return None, "User profile not found."
 
-        res = supabase.table("users").update(data_dict).eq("user_id", user_id).execute()
-        if not res.data:
-            return None, "Failed to update profile."
-        return res.data[0], None
+        if update_data.username is not None:
+            profile.username = update_data.username
+        if update_data.phone_number is not None:
+            profile.phone_number = update_data.phone_number
 
-    @staticmethod
-    def suspend_profile(user_id: int):
-        """Entity Logic (Story 4): Suspend user profile (Hide from public view)"""
-        # For profiles, we might just flag a specific profile suspension field, 
-        # but here we reuse the main suspension logic per standard practice.
-        res = supabase.table("users").update({"is_suspended": True}).eq("user_id", user_id).execute()
-        if not res.data:
-            return None, "Failed to suspend profile."
-        return {"message": f"Profile for user {user_id} suspended."}, None
+        db.commit()
+        db.refresh(profile)
+        return profile, None
 
     @staticmethod
-    def search_profiles(username_query: Optional[str]):
+    def search_profiles(db: Session, username_query: Optional[str]):
         """Entity Logic (Story 5): Search user profiles"""
-        query = supabase.table("users").select("user_id, username, phone_number, role_id")
+        query = db.query(UserProfile)
         if username_query:
-            query = query.ilike("username", f"%{username_query}%")
-        res = query.execute()
-        return res.data, None
+            query = query.filter(UserProfile.username.ilike(f"%{username_query}%"))
+        return query.all(), None

@@ -2,8 +2,8 @@
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime, timezone
-from database import supabase
+from sqlalchemy.orm import Session
+from models import Activity
 
 # ==========================================
 # 1. Pydantic Models (Data Validation)
@@ -27,59 +27,60 @@ class ActivityUpdate(BaseModel):
 class FundraisingActivityEntity:
     
     @staticmethod
-    def create_activity(activity_data: ActivityCreate, fundraiser_id: int):
-        """Entity Logic: Insert new activity into database"""
-        new_activity = {
-            "fundraiser_id": fundraiser_id,
-            "category_id": activity_data.category_id,
-            "title": activity_data.title,
-            "description": activity_data.description,
-            "target_amount": activity_data.target_amount,
-            "is_private": activity_data.is_private,
-            "status": "Ongoing",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        res = supabase.table("activities").insert(new_activity).execute()
-        if not res.data:
-            return None, "Failed to create activity."
-        return res.data[0], None
+    def create_activity(db: Session, activity_data: ActivityCreate, profile_id: int):
+        new_activity = Activity(
+            fundraiser_id=profile_id,
+            category_id=activity_data.category_id,
+            title=activity_data.title,
+            description=activity_data.description,
+            target_amount=activity_data.target_amount,
+            is_private=activity_data.is_private,
+            status="Ongoing"
+        )
+        db.add(new_activity)
+        db.commit()
+        db.refresh(new_activity)
+        return new_activity, None
 
     @staticmethod
-    def get_activity(activity_id: int, fundraiser_id: int):
-        """Entity Logic: Retrieve a specific activity"""
-        res = supabase.table("activities").select("*").eq("activity_id", activity_id).eq("fundraiser_id", fundraiser_id).execute()
-        if not res.data:
+    def get_activity(db: Session, activity_id: int, profile_id: int):
+        activity = db.query(Activity).filter(Activity.activity_id == activity_id, Activity.fundraiser_id == profile_id).first()
+        if not activity:
             return None, "Activity not found or unauthorized."
-        return res.data[0], None
+        return activity, None
 
     @staticmethod
-    def update_activity(activity_id: int, title: str, fundraiser_id: int):
-        """Entity Logic: Update activity title"""
-        res = supabase.table("activities").update({"title": title}).eq("activity_id", activity_id).eq("fundraiser_id", fundraiser_id).execute()
-        if not res.data:
+    def update_activity(db: Session, activity_id: int, title: str, profile_id: int):
+        activity = db.query(Activity).filter(Activity.activity_id == activity_id, Activity.fundraiser_id == profile_id).first()
+        if not activity:
             return None, "Failed to update activity."
-        return res.data[0], None
+            
+        activity.title = title
+        db.commit()
+        db.refresh(activity)
+        return activity, None
 
     @staticmethod
-    def suspend_activity(activity_id: int, fundraiser_id: int):
-        """Entity Logic: Suspend/Archive an activity"""
-        res = supabase.table("activities").update({"status": "Suspended"}).eq("activity_id", activity_id).eq("fundraiser_id", fundraiser_id).execute()
-        if not res.data:
+    def suspend_activity(db: Session, activity_id: int, profile_id: int):
+        activity = db.query(Activity).filter(Activity.activity_id == activity_id, Activity.fundraiser_id == profile_id).first()
+        if not activity:
             return None, "Failed to suspend activity."
-        return res.data[0], None
+            
+        activity.status = "Suspended"
+        db.commit()
+        db.refresh(activity)
+        return activity, None
 
     @staticmethod
-    def search_activities(title: Optional[str], fundraiser_id: int):
-        """Entity Logic: Search ongoing activities"""
-        query = supabase.table("activities").select("*").eq("fundraiser_id", fundraiser_id)
+    def search_activities(db: Session, title: Optional[str], profile_id: int):
+        query = db.query(Activity).filter(Activity.fundraiser_id == profile_id)
         if title:
-            query = query.ilike("title", f"%{title}%")
-        return query.execute().data, None
+            query = query.filter(Activity.title.ilike(f"%{title}%"))
+        return query.all(), None
 
     @staticmethod
-    def search_history(title: Optional[str], fundraiser_id: int):
-        """Entity Logic: Search past (Closed) activities"""
-        query = supabase.table("activities").select("*").eq("fundraiser_id", fundraiser_id).eq("status", "Closed")
+    def search_history(db: Session, title: Optional[str], profile_id: int):
+        query = db.query(Activity).filter(Activity.fundraiser_id == profile_id, Activity.status == "Closed")
         if title:
-            query = query.ilike("title", f"%{title}%")
-        return query.execute().data, None
+            query = query.filter(Activity.title.ilike(f"%{title}%"))
+        return query.all(), None

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Donee Boundary · Fundraising System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F8FAFC] min-h-screen text-slate-800 font-inter">
+
+    <!-- Login Screen (Story 29) -->
+    <div id="loginView" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-emerald-200 w-96">
+            <h2 class="text-2xl font-bold text-emerald-600 mb-6 text-center">Donee Login</h2>
+            <input type="email" id="loginEmail" placeholder="Donee Email" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50">
+            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-6 px-4 py-2 border rounded-xl bg-slate-50">
+            <button onclick="login()" class="w-full bg-emerald-500 text-white font-bold py-2 rounded-xl hover:bg-emerald-600">Enter System</button>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardView" class="hidden flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-emerald-900 text-emerald-100 flex flex-col">
+            <div class="p-6 border-b border-emerald-800 font-bold text-white tracking-wider">💖 DONEE HUB</div>
+            <nav class="p-4 space-y-2">
+                <button onclick="showTab('discoverTab')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-emerald-800 hover:text-white">🌍 Discover (S24-S25)</button>
+                <button onclick="showTab('favoritesTab')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-emerald-800 hover:text-white">⭐ My Favorites (S26-S28)</button>
+                <button onclick="showTab('historyTab')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-emerald-800 hover:text-white">📜 My Donations (S31-S32)</button>
+            </nav>
+            <div class="mt-auto p-4 border-t border-emerald-800">
+                <button onclick="logout()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-emerald-800 text-rose-300">↩ Sign Out (S30)</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-8">Support a Cause</h1>
+
+            <!-- Discover Tab -->
+            <div id="discoverTab" class="tab-content">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+                    <h3 class="font-bold text-lg mb-4">Search Campaigns (S24)</h3>
+                    <div class="flex gap-4">
+                        <input type="text" id="searchAct" placeholder="Search by title..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
+                        <button onclick="loadActivities()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold">Search</button>
+                    </div>
+                </div>
+                <div id="activitiesList" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Favorites Tab -->
+            <div id="favoritesTab" class="tab-content hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+                    <h3 class="font-bold text-lg mb-4">Search My Favorites (S27)</h3>
+                    <div class="flex gap-4">
+                        <input type="text" id="searchFav" placeholder="Filter favorites..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
+                        <button onclick="loadFavorites()" class="bg-slate-100 text-slate-700 px-6 py-2 rounded-xl font-bold border border-slate-200">Filter</button>
+                    </div>
+                </div>
+                <div id="favoritesList" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+            </div>
+
+            <!-- Donation History Tab -->
+            <div id="historyTab" class="tab-content hidden">
+                <h3 class="font-bold text-2xl text-slate-800 mb-6">Past Donations (S31-S32)</h3>
+                <div id="donationsList" class="space-y-4"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000/donee";
+        let token = localStorage.getItem('donee_token') || "";
+
+        if(token) toggleView(true);
+
+        function toggleView(isLogged) {
+            document.getElementById('loginView').classList.toggle('hidden', isLogged);
+            document.getElementById('dashboardView').classList.toggle('hidden', !isLogged);
+            if(isLogged) { showTab('discoverTab'); }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            if(tabId === 'discoverTab') loadActivities();
+            if(tabId === 'favoritesTab') loadFavorites();
+            if(tabId === 'historyTab') loadDonations();
+        }
+
+        // Login & Logout (S29, S30)
+        async function login() {
+            const res = await fetch(`${API}/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPass').value })
+            });
+            if (res.ok) {
+                token = (await res.json()).access_token;
+                localStorage.setItem('donee_token', token);
+                toggleView(true);
+            } else alert("Login Failed! Please check your credentials.");
+        }
+
+        function logout() { localStorage.removeItem('donee_token'); location.reload(); }
+        const getHeaders = () => ({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
+
+        // Discover Activities (S24, S25)
+        async function loadActivities() {
+            const q = document.getElementById('searchAct').value;
+            const res = await fetch(`${API}/activities${q ? '?title='+q : ''}`, { headers: getHeaders() });
+            const data = await res.json();
+            document.getElementById('activitiesList').innerHTML = data.map(act => `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                    <h4 class="font-bold text-xl text-slate-800 mb-2">${act.title}</h4>
+                    <p class="text-sm text-slate-500 mb-4 flex-1">${act.description}</p>
+                    <div class="bg-slate-50 p-3 rounded-lg mb-4 text-sm font-bold flex justify-between">
+                        <span class="text-slate-600">Goal: $${act.target_amount}</span>
+                        <span class="text-emerald-600">Raised: $${act.current_amount}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="donate(${act.activity_id})" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl transition">Donate</button>
+                        <button onclick="toggleFav(${act.activity_id})" class="px-4 bg-rose-50 text-rose-500 hover:bg-rose-100 font-bold rounded-xl border border-rose-100 transition">⭐</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Favorites (S26, S27, S28)
+        async function toggleFav(id) {
+            const res = await fetch(`${API}/favorites/${id}`, { method: 'POST', headers: getHeaders() });
+            if(res.ok) { 
+                const data = await res.json();
+                alert(data.message); 
+                // Refresh views if we are on favorites tab
+                if(!document.getElementById('favoritesTab').classList.contains('hidden')) loadFavorites();
+            }
+        }
+
+        async function loadFavorites() {
+            const q = document.getElementById('searchFav').value;
+            const res = await fetch(`${API}/favorites${q ? '?title='+q : ''}`, { headers: getHeaders() });
+            const data = await res.json();
+            document.getElementById('favoritesList').innerHTML = data.map(fav => `
+                <div class="bg-rose-50 p-6 rounded-2xl border border-rose-100 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-slate-800">${fav.activities.title}</h4>
+                        <p class="text-sm text-slate-600 mt-1">Goal: $${fav.activities.target_amount} | Current: $${fav.activities.current_amount}</p>
+                    </div>
+                    <button onclick="toggleFav(${fav.activity_id})" class="bg-white border border-rose-200 text-rose-500 hover:bg-rose-100 font-bold py-2 px-4 rounded-xl transition">Remove ⭐</button>
+                </div>
+            `).join('');
+        }
+
+        // Donations (Helper, S31, S32)
+        async function donate(activity_id) {
+            const amount = prompt("Enter donation amount ($):");
+            if (!amount || isNaN(amount) || amount <= 0) return alert("Invalid amount.");
+            
+            const message = prompt("Leave a message (Optional):") || "";
+            
+            const body = JSON.stringify({ amount: parseFloat(amount), message: message, anonymous: false });
+            const res = await fetch(`${API}/activities/${activity_id}/donate`, { method: 'POST', headers: getHeaders(), body });
+            
+            if(res.ok) { alert("Thank you for your donation!"); loadActivities(); } 
+            else { const err = await res.json(); alert("Failed: " + err.detail); }
+        }
+
+        async function loadDonations() {
+            const res = await fetch(`${API}/donations`, { headers: getHeaders() });
+            const data = await res.json();
+            document.getElementById('donationsList').innerHTML = data.map(don => `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">${new Date(don.created_at).toLocaleString()}</p>
+                        <h4 class="font-bold text-slate-800 text-lg">${don.activities.title}</h4>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block bg-emerald-100 text-emerald-700 font-black text-xl px-4 py-2 rounded-xl">$${don.amount.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

@@ -3,12 +3,12 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta, timezone
-from database import supabase
+from sqlalchemy.orm import Session
 import bcrypt
 import jwt
 
-# 引入 JWT 配置所需的常量
 from dependencies import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from models import UserAccount, Activity, Bookmark, Donation
 
 # ==========================================
 # 1. Pydantic Models (Data Validation)
@@ -33,119 +33,105 @@ class DoneeEntity:
 
     @staticmethod
     def verify_password(plain_password: str, password_hash: str) -> bool:
-        """Helper for Story 29"""
         try:
             return bcrypt.checkpw(plain_password.encode('utf-8'), password_hash.encode('utf-8'))
         except:
             return False
 
     @staticmethod
-    def login_donee(login_data: DoneeLoginRequest):
-        """Entity Logic (Story 29): Authenticate Donee and generate token"""
-        response = supabase.table("users").select("*").eq("email", login_data.email).execute()
-        user = response.data[0] if response.data else None
+    def login_donee(db: Session, login_data: DoneeLoginRequest):
+        account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()
 
-        if not user or not DoneeEntity.verify_password(login_data.password, user.get("password_hash")):
+        if not account or not DoneeEntity.verify_password(login_data.password, account.password_hash):
             return None, "Incorrect email or password."
         
-        # 确保只有 Donee (role_id = 1) 能够走这个专用登录通道
-        if user.get("role_id") != 1:
+        if not account.profile or account.profile.role_id != 1:
             return None, "Access denied. Only Donees can log in here."
             
-        if user.get("status") == "Suspended":
+        if account.status == "Suspended" or account.is_suspended:
             return None, "This account has been suspended."
 
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        token = jwt.encode({"sub": user["email"], "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+        token = jwt.encode({"sub": account.email, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
         
         return {"access_token": token, "token_type": "bearer"}, None
 
     @staticmethod
-    def search_activities(title: Optional[str]):
-        """Entity Logic (Story 24): Search ongoing fundraising activities"""
-        query = supabase.table("activities").select("*").eq("status", "Ongoing")
+    def search_activities(db: Session, title: Optional[str]):
+        query = db.query(Activity).filter(Activity.status == "Ongoing")
         if title:
-            query = query.ilike("title", f"%{title}%")
-        res = query.execute()
-        return res.data, None
+            query = query.filter(Activity.title.ilike(f"%{title}%"))
+        return query.all(), None
 
     @staticmethod
-    def view_activity(activity_id: int):
-        """Entity Logic (Story 25): View specific fundraising activity details"""
-        res = supabase.table("activities").select("*, users(username, email)").eq("activity_id", activity_id).execute()
-        if not res.data:
+    def view_activity(db: Session, activity_id: int):
+        activity = db.query(Activity).filter(Activity.activity_id == activity_id).first()
+        if not activity:
             return None, "Activity not found."
         
-        activity = res.data[0]
-        # (Optional) Update view count
-        new_views = activity.get("view_count", 0) + 1
-        supabase.table("activities").update({"view_count": new_views}).eq("activity_id", activity_id).execute()
-        activity["view_count"] = new_views
+        # Update view count
+        activity.view_count += 1
+        db.commit()
+        db.refresh(activity)
         
         return activity, None
 
     @staticmethod
-    def toggle_favorite(activity_id: int, user_id: int):
-        """Entity Logic (Story 26): Save/Remove activity to/from favorites list"""
-        existing = supabase.table("bookmarks").select("*").eq("user_id", user_id).eq("activity_id", activity_id).execute()
+    def toggle_favorite(db: Session, activity_id: int, profile_id: int):
+        existing = db.query(Bookmark).filter(Bookmark.user_id == profile_id, Bookmark.activity_id == activity_id).first()
         
-        if existing.data:
-            supabase.table("bookmarks").delete().eq("bookmark_id", existing.data[0]["bookmark_id"]).execute()
+        if existing:
+            db.delete(existing)
+            db.commit()
             return {"message": "Activity removed from favorites", "is_bookmarked": False}, None
         else:
-            new_bookmark = {
-                "user_id": user_id,
-                "activity_id": activity_id,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            supabase.table("bookmarks").insert(new_bookmark).execute()
+            new_bookmark = Bookmark(user_id=profile_id, activity_id=activity_id)
+            db.add(new_bookmark)
+            db.commit()
             return {"message": "Activity saved to favorites", "is_bookmarked": True}, None
 
     @staticmethod
-    def get_favorites(user_id: int, title_query: Optional[str] = None):
-        """Entity Logic (Story 27 & 28): View and Search favourite list"""
-        query = supabase.table("bookmarks").select("bookmark_id, created_at, activities(*)").eq("user_id", user_id)
-        res = query.execute()
-        favorites = res.data
-        if title_query and favorites:
-            favorites = [fav for fav in favorites if title_query.lower() in fav.get("activities", {}).get("title", "").lower()]
+    def get_favorites(db: Session, profile_id: int, title_query: Optional[str] = None):
+        query = db.query(Bookmark).filter(Bookmark.user_id == profile_id)
+        favorites = query.all()
+        
+        if title_query:
+            favorites = [fav for fav in favorites if fav.activity and title_query.lower() in fav.activity.title.lower()]
         return favorites, None
 
     @staticmethod
-    def make_donation(activity_id: int, user_id: int, donation_data: DonationRequest):
-        """Entity Logic: Helper to process a new donation"""
-        act_res = supabase.table("activities").select("current_amount, status").eq("activity_id", activity_id).execute()
-        if not act_res.data:
+    def make_donation(db: Session, activity_id: int, profile_id: int, donation_data: DonationRequest):
+        activity = db.query(Activity).filter(Activity.activity_id == activity_id).first()
+        if not activity:
             return None, "Activity not found."
             
-        activity = act_res.data[0]
-        if activity["status"] != "Ongoing":
+        if activity.status != "Ongoing":
             return None, "This activity is closed and no longer accepts donations."
             
-        new_amount = float(activity.get("current_amount") or 0) + donation_data.amount
-        supabase.table("activities").update({"current_amount": new_amount}).eq("activity_id", activity_id).execute()
+        activity.current_amount += donation_data.amount
         
-        new_donation = {
-            "activity_id": activity_id, 
-            "user_id": user_id, 
-            "amount": donation_data.amount, 
-            "message": donation_data.message, 
-            "is_anonymous": donation_data.anonymous, 
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        res = supabase.table("donations").insert(new_donation).execute()
-        return {"message": "Donation successful", "new_amount": new_amount, "donation_record": res.data[0]}, None
+        new_donation = Donation(
+            activity_id=activity_id,
+            user_id=profile_id,
+            amount=donation_data.amount,
+            message=donation_data.message,
+            is_anonymous=donation_data.anonymous
+        )
+        
+        db.add(new_donation)
+        db.commit()
+        db.refresh(new_donation)
+        
+        return {"message": "Donation successful", "new_amount": activity.current_amount, "donation_id": new_donation.donation_id}, None
 
     @staticmethod
-    def search_past_donations(user_id: int):
-        """Entity Logic (Story 31): Search for past donations"""
-        res = supabase.table("donations").select("donation_id, amount, created_at, activities(title)").eq("user_id", user_id).order("created_at", desc=True).execute()
-        return res.data, None
+    def search_past_donations(db: Session, profile_id: int):
+        donations = db.query(Donation).filter(Donation.user_id == profile_id).order_by(Donation.created_at.desc()).all()
+        return donations, None
 
     @staticmethod
-    def view_past_donation_detail(donation_id: int, user_id: int):
-        """Entity Logic (Story 32): View specific past donation details"""
-        res = supabase.table("donations").select("*, activities(title, description, status)").eq("donation_id", donation_id).eq("user_id", user_id).execute()
-        if not res.data:
+    def view_past_donation_detail(db: Session, donation_id: int, profile_id: int):
+        donation = db.query(Donation).filter(Donation.donation_id == donation_id, Donation.user_id == profile_id).first()
+        if not donation:
             return None, "Donation record not found."
-        return res.data[0], None
+        return donation, None
