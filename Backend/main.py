@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import the various business modules that have been split up
-from routers import auth, admin, fundraiser, donee, platform_admin
+from Controller import (
+    user_admin_controller,
+    fundraiser_controller,
+    donee_controller,
+    platform_manager_controller
+)
 
-app = FastAPI(title="CSIT314 Backend - Fully Refactored")
+app = FastAPI(title="CSIT314 Backend - BCE Architecture")
 
-# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,13 +18,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount all Routers
-app.include_router(auth.router)
-app.include_router(admin.router)
-app.include_router(fundraiser.router)
-app.include_router(donee.router)
-app.include_router(platform_admin.router)
+app.include_router(user_admin_controller.router)
+app.include_router(fundraiser_controller.router)
+app.include_router(donee_controller.router)
+app.include_router(platform_manager_controller.router)
 
 @app.get("/")
 def root():
-    return {"message": "Backend System is running smoothly with Refactored Architecture!"}
+    return {"message": "BCE Architecture Running Perfectly!"}
