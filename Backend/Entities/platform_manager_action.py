@@ -44,6 +44,7 @@ class PlatformManagerEntity:
 
     @staticmethod
     def login_manager(login_data: PlatformManagerLoginRequest):
+        """Entity Logic (Story 38): Platform Manager Login"""
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()
@@ -51,6 +52,7 @@ class PlatformManagerEntity:
             if not account or not PlatformManagerEntity.verify_password(login_data.password, account.password_hash):
                 return None, "Incorrect email or password."
             
+            # Ensure the role is Platform Manager (role_id = 3)
             if not account.profile or account.profile.role_id != 3:
                 return None, "Access denied. Only Platform Managers can log in here."
                 
@@ -66,6 +68,7 @@ class PlatformManagerEntity:
 
     @staticmethod
     def create_category(cat_data: CategoryCreate):
+        """Entity Logic (Story 33): Create fundraising activity category"""
         db: Session = next(get_db())
         try:
             new_cat = Category(
@@ -82,6 +85,7 @@ class PlatformManagerEntity:
 
     @staticmethod
     def view_category(category_id: int):
+        """Entity Logic (Story 34): View fundraising activity category"""
         db: Session = next(get_db())
         try:
             category = db.query(Category).filter(Category.category_id == category_id).first()
@@ -93,6 +97,7 @@ class PlatformManagerEntity:
 
     @staticmethod
     def update_category(category_id: int, cat_data: CategoryUpdate):
+        """Entity Logic (Story 35): Update fundraising activity category"""
         db: Session = next(get_db())
         try:
             category = db.query(Category).filter(Category.category_id == category_id).first()
@@ -112,6 +117,7 @@ class PlatformManagerEntity:
 
     @staticmethod
     def suspend_category(category_id: int):
+        """Entity Logic (Story 36): Suspend fundraising activity category"""
         db: Session = next(get_db())
         try:
             category = db.query(Category).filter(Category.category_id == category_id).first()
@@ -126,6 +132,7 @@ class PlatformManagerEntity:
 
     @staticmethod
     def search_categories(name_query: Optional[str]):
+        """Entity Logic (Story 37): Search for fundraising categories"""
         db: Session = next(get_db())
         try:
             query = db.query(Category)
@@ -137,12 +144,15 @@ class PlatformManagerEntity:
 
     @staticmethod
     def generate_stats_by_date(start_date: datetime, end_date: datetime):
+        """Entity Logic (Story 40, 41, 42): Aggregate stats for reports"""
         db: Session = next(get_db())
         try:
+            # Count new activities
             new_activities_count = db.query(func.count(Activity.activity_id)).filter(
                 Activity.created_at >= start_date, Activity.created_at <= end_date
             ).scalar() or 0
             
+            # Count donations and total amount
             donations_stats = db.query(
                 func.count(Donation.donation_id), 
                 func.sum(Donation.amount)

@@ -3,131 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <title>Platform Manager · Fundraising System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body class="bg-[#F8FAFC] min-h-screen text-slate-800 font-inter">
+<body class="text-slate-800 flex h-screen overflow-hidden">
 
-    <div id="loginView" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-violet-200 w-96">
-            <h2 class="text-2xl font-bold text-violet-700 mb-6 text-center">Manager Login</h2>
-            <input type="email" id="loginEmail" placeholder="Manager Email" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50">
-            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-6 px-4 py-2 border rounded-xl bg-slate-50">
-            <button onclick="login()" class="w-full bg-violet-600 text-white font-bold py-2 rounded-xl hover:bg-violet-700">Enter Platform</button>
+    <div id="loginView" class="fixed inset-0 bg-violet-50 flex items-center justify-center z-50">
+        <div class="bg-white p-10 rounded-[2rem] shadow-2xl border border-violet-100 w-[420px]">
+            <div class="text-center mb-10">
+                <div class="bg-gradient-to-br from-violet-500 to-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg shadow-violet-200">📈</div>
+                <h2 class="text-3xl font-extrabold text-slate-900">Platform Mgr</h2>
+                <p class="text-sm text-slate-500 mt-2">Platform Data & Categories</p>
+            </div>
+            <input type="email" id="loginEmail" placeholder="Manager Email" class="w-full mb-4 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all text-sm font-medium">
+            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-8 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all text-sm font-medium">
+            <button onclick="login()" class="w-full bg-violet-600 text-white font-bold py-4 rounded-2xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 transform hover:-translate-y-0.5">Enter HQ</button>
         </div>
     </div>
 
-    <div id="dashboardView" class="hidden">
-        <nav class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-            <h1 class="text-xl font-bold text-violet-700">Platform Control Center</h1>
-            <button onclick="logout()" class="text-slate-500 font-medium hover:text-rose-500">Logout</button>
-        </nav>
-
-        <div class="max-w-6xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-xl font-bold text-slate-800 mb-6">Activity Categories</h3>
-                <div class="flex gap-2 mb-6">
-                    <input type="text" id="catName" placeholder="New Category Name" class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
-                    <button onclick="createCategory()" class="bg-violet-600 text-white px-6 font-bold rounded-xl">Create</button>
-                </div>
-                <hr class="my-4 border-slate-100">
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="searchCat" placeholder="Search categories..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
-                    <button onclick="loadCategories()" class="bg-slate-200 text-slate-700 px-6 font-bold rounded-xl">Filter</button>
-                </div>
-                <div id="catList" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
+    <div id="dashboardView" class="hidden w-full h-full flex">
+        
+        <div class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl z-20 relative">
+            <div class="p-8">
+                <h1 class="text-2xl font-extrabold text-white flex items-center gap-2 mb-10 tracking-tight">
+                    <span class="text-violet-400">📊 System</span>HQ
+                </h1>
+                <nav class="flex flex-col gap-3">
+                    <button onclick="switchTab('categories')" id="nav-categories" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-violet-400 font-bold transition-all">🏷️ Categories</button>
+                    <button onclick="switchTab('reports')" id="nav-reports" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all">📉 Data Reports</button>
+                </nav>
             </div>
+            <div class="p-6 border-t border-slate-800">
+                <button onclick="logout()" class="w-full text-left px-4 py-3 text-rose-400 font-bold hover:bg-slate-800 rounded-xl transition-colors">🚪 Logout</button>
+            </div>
+        </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-xl font-bold text-slate-800 mb-6">System Reports</h3>
-                <div class="grid grid-cols-3 gap-4 mb-8">
-                    <button onclick="fetchReport('daily')" class="bg-violet-50 text-violet-700 font-bold py-4 rounded-xl border border-violet-100 hover:bg-violet-100">Daily Report</button>
-                    <button onclick="fetchReport('weekly')" class="bg-violet-50 text-violet-700 font-bold py-4 rounded-xl border border-violet-100 hover:bg-violet-100">Weekly Report</button>
-                    <button onclick="fetchReport('monthly')" class="bg-violet-50 text-violet-700 font-bold py-4 rounded-xl border border-violet-100 hover:bg-violet-100">Monthly Report</button>
+        <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto relative">
+            
+            <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
+                <div>
+                    <h2 id="pageTitle" class="text-3xl font-extrabold text-slate-900 tracking-tight">Category Management</h2>
+                    <p id="pageSubtitle" class="text-sm text-slate-500 font-medium mt-1">Organize fundraising activities</p>
+                </div>
+                
+                <div id="searchContainer" class="flex gap-2 w-96">
+                    <input type="text" id="searchInput" placeholder="Search category name..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm">
+                    <button onclick="executeSearch()" class="bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 text-sm">Search</button>
+                </div>
+            </header>
+
+            <div class="p-10">
+                
+                <div id="section-categories">
+                    
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8 flex gap-4 items-end">
+                        <div class="w-1/3">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Category Name</label>
+                            <input type="text" id="createCatName" placeholder="e.g., Education" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-violet-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
+                            <input type="text" id="createCatDesc" placeholder="Optional description..." class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-violet-500">
+                        </div>
+                        <button onclick="createCategory()" class="bg-violet-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-violet-700 h-[50px] shadow-md">Add Category</button>
+                    </div>
+
+                    <div id="categoryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        </div>
                 </div>
 
-                <div id="reportCanvas" class="hidden grid-cols-2 gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                    <div class="col-span-2 text-center text-sm font-bold text-slate-400 mb-2" id="repDate"></div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm text-center">
-                        <p class="text-xs font-bold text-slate-400 uppercase">New Campaigns</p>
-                        <p class="text-3xl font-black text-slate-800 mt-2" id="repCamps">0</p>
+                <div id="section-reports" class="hidden">
+                    
+                    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mb-8 text-center">
+                        <h3 class="text-xl font-bold text-slate-800 mb-6">Select Reporting Period</h3>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="generateReport('daily')" class="w-40 bg-indigo-50 text-indigo-600 border-2 border-indigo-200 font-bold py-4 rounded-2xl hover:bg-indigo-100 hover:border-indigo-300 transition-all">📅 Daily</button>
+                            <button onclick="generateReport('weekly')" class="w-40 bg-violet-50 text-violet-600 border-2 border-violet-200 font-bold py-4 rounded-2xl hover:bg-violet-100 hover:border-violet-300 transition-all">📆 Weekly</button>
+                            <button onclick="generateReport('monthly')" class="w-40 bg-fuchsia-50 text-fuchsia-600 border-2 border-fuchsia-200 font-bold py-4 rounded-2xl hover:bg-fuchsia-100 hover:border-fuchsia-300 transition-all">🗓️ Monthly</button>
+                        </div>
                     </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm text-center">
-                        <p class="text-xs font-bold text-slate-400 uppercase">Transactions</p>
-                        <p class="text-3xl font-black text-slate-800 mt-2" id="repTrans">0</p>
+
+                    <div id="reportCanvas" class="hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-black text-slate-800">System Report: <span id="repTypeLabel" class="text-violet-600">--</span></h3>
+                            <span id="repDate" class="bg-slate-200 text-slate-600 font-mono text-xs font-bold px-3 py-1 rounded-lg">Period: --</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl shadow-xl text-white relative overflow-hidden">
+                                <div class="relative z-10">
+                                    <div class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Total Donations</div>
+                                    <div class="text-4xl font-black text-emerald-400" id="repFunds">$0.00</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center">
+                                <div class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Transactions</div>
+                                <div class="text-4xl font-black text-slate-800" id="repTrans">0</div>
+                            </div>
+
+                            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center">
+                                <div class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">New Campaigns</div>
+                                <div class="text-4xl font-black text-violet-600" id="repCamps">0</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-span-2 bg-emerald-50 p-4 rounded-xl shadow-sm text-center border border-emerald-100">
-                        <p class="text-xs font-bold text-emerald-600 uppercase">Total Funds Raised</p>
-                        <p class="text-4xl font-black text-emerald-600 mt-2" id="repFunds">$0.00</p>
                     </div>
-                </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        const API = 'http://localhost:8000/platform';
-        
+        const API = 'http://127.0.0.1:8000/platform';
+        let token = localStorage.getItem('pmToken') || null;
+        let currentTab = 'categories'; 
+
+        if(token) showDashboard();
+
         function getHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('pmToken')}`
-            };
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
         }
 
+        // --- AUTH (Story 38, 39) ---
         async function login() {
-            const res = await fetch(`${API}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPass').value })
-            });
-            if(res.ok) {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
+            try {
+                const res = await fetch(`${API}/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
                 const data = await res.json();
-                localStorage.setItem('pmToken', data.access_token);
-                document.getElementById('loginView').classList.add('hidden');
-                document.getElementById('dashboardView').classList.remove('hidden');
-                loadCategories();
-            } else alert("Login failed");
+                if (res.ok) {
+                    token = data.access_token;
+                    localStorage.setItem('pmToken', token);
+                    showDashboard();
+                } else alert(data.detail || "Login failed");
+            } catch (err) { alert("Server error."); }
         }
 
-        function logout() { localStorage.removeItem('pmToken'); location.reload(); }
-
-        async function createCategory() {
-            const body = { name: document.getElementById('catName').value, description: "Auto-generated desc" };
-            await fetch(`${API}/categories`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
-            loadCategories();
+        async function logout() {
+            if(confirm("Log out of Manager Portal?")) {
+                await fetch(`${API}/logout`, { method: 'POST', headers: getHeaders() });
+                localStorage.removeItem('pmToken');
+                token = null;
+                document.getElementById('loginView').style.display = 'flex';
+                document.getElementById('dashboardView').style.display = 'none';
+            }
         }
 
-        async function loadCategories() {
-            const q = document.getElementById('searchCat').value;
-            const res = await fetch(`${API}/categories${q ? '?name='+q : ''}`, { headers: getHeaders() });
-            const data = await res.json();
-            document.getElementById('catList').innerHTML = data.map(c => `
-                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                    <div class="flex justify-between items-center">
-                        <strong class="text-slate-800">${c.name}</strong>
-                        ${c.is_suspended ? '<span class="text-xs text-slate-400 font-bold bg-slate-200 px-2 py-1 rounded">Suspended</span>' : `<button onclick="suspendCat(${c.category_id})" class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Suspend</button>`}
+        function showDashboard() {
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'flex';
+            switchTab('categories');
+        }
+
+        // --- NAVIGATION & SEARCH ---
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('searchInput').value = '';
+            
+            const activeClass = "text-left px-4 py-3 rounded-xl bg-slate-800 text-violet-400 font-bold transition-all";
+            const inactiveClass = "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all";
+            
+            document.getElementById('nav-categories').className = tab === 'categories' ? activeClass : inactiveClass;
+            document.getElementById('nav-reports').className = tab === 'reports' ? activeClass : inactiveClass;
+            
+            document.getElementById('section-categories').style.display = tab === 'categories' ? 'block' : 'none';
+            document.getElementById('section-reports').style.display = tab === 'reports' ? 'block' : 'none';
+            document.getElementById('searchContainer').style.visibility = tab === 'reports' ? 'hidden' : 'visible';
+            
+            if(tab === 'categories') { 
+                document.getElementById('pageTitle').innerText = "Category Management"; 
+                document.getElementById('pageSubtitle').innerText = "Organize fundraising activities globally.";
+                loadCategories(); 
+            }
+            if(tab === 'reports') { 
+                document.getElementById('pageTitle').innerText = "Data Reports"; 
+                document.getElementById('pageSubtitle').innerText = "Generate macro-level insights for the platform.";
+            }
+        }
+
+        function executeSearch() {
+            if(currentTab === 'categories') {
+                const query = document.getElementById('searchInput').value;
+                loadCategories(query);
+            }
+        }
+
+        // --- CATEGORIES (Story 33-37) ---
+        async function loadCategories(query = '') {
+            const res = await fetch(`${API}/categories${query ? '?name='+query : ''}`, { headers: getHeaders() });
+            if(res.status === 401 || res.status === 403) return logout();
+            const categories = await res.json();
+            
+            document.getElementById('categoryList').innerHTML = categories.map(c => `
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-violet-300 transition-colors">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded">ID: ${c.category_id}</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded ${c.is_archived ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${c.is_archived ? 'Suspended' : 'Active'}</span>
+                    </div>
+                    <h3 class="font-bold text-xl text-slate-900 mb-1">${c.name}</h3>
+                    <p class="text-sm text-slate-500 mb-6 truncate">${c.description || 'No description'}</p>
+                    
+                    <div class="flex gap-2 border-t border-slate-100 pt-4">
+                        <button onclick="viewCategory(${c.category_id})" class="flex-1 text-xs font-bold text-indigo-600 bg-indigo-50 py-2 rounded-xl hover:bg-indigo-100">View</button>
+                        ${!c.is_archived ? `
+                        <button onclick="updateCategory(${c.category_id}, '${c.name}', '${c.description || ''}')" class="flex-1 text-xs font-bold text-slate-700 bg-slate-100 py-2 rounded-xl hover:bg-slate-200">Edit</button>
+                        <button onclick="suspendCategory(${c.category_id})" class="flex-1 text-xs font-bold text-rose-600 bg-rose-50 py-2 rounded-xl hover:bg-rose-100">Suspend</button>
+                        ` : ''}
                     </div>
                 </div>
-            `).join('');
+            `).join('') || `<div class="col-span-full text-center py-10 text-slate-400 font-bold">No categories found.</div>`;
         }
 
-        async function suspendCat(id) {
+        async function createCategory() {
+            const name = document.getElementById('createCatName').value;
+            const description = document.getElementById('createCatDesc').value;
+            if(!name) return alert("Category Name is required.");
+
+            const res = await fetch(`${API}/categories`, {
+                method: 'POST', headers: getHeaders(),
+                body: JSON.stringify({ name, description })
+            });
+            if(res.ok) {
+                document.getElementById('createCatName').value = '';
+                document.getElementById('createCatDesc').value = '';
+                loadCategories();
+            } else alert("Failed to create category.");
+        }
+
+        async function viewCategory(id) {
+            const res = await fetch(`${API}/categories/${id}`, { headers: getHeaders() });
+            const data = await res.json();
+            alert(`CATEGORY DETAILS\n\nID: ${data.category_id}\nName: ${data.name}\nDescription: ${data.description || 'N/A'}\nStatus: ${data.is_archived ? 'Suspended' : 'Active'}`);
+        }
+
+        async function updateCategory(id, currentName, currentDesc) {
+            const newName = prompt("Update Category Name:", currentName);
+            if(!newName) return;
+            const newDesc = prompt("Update Description:", currentDesc);
+            
+            const res = await fetch(`${API}/categories/${id}`, {
+                method: 'PATCH', headers: getHeaders(),
+                body: JSON.stringify({ name: newName, description: newDesc })
+            });
+            if(res.ok) loadCategories();
+            else alert("Failed to update.");
+        }
+
+        async function suspendCategory(id) {
+            if(!confirm("Suspend this category? It will no longer be available for new activities.")) return;
             await fetch(`${API}/categories/${id}/suspend`, { method: 'POST', headers: getHeaders() });
             loadCategories();
         }
 
-        async function fetchReport(type) {
+        // --- REPORTS (Story 40-42) ---
+        async function generateReport(type) {
             const res = await fetch(`${API}/reports/${type}`, { headers: getHeaders() });
             if(res.ok) {
                 const result = await res.json();
                 document.getElementById('reportCanvas').classList.remove('hidden');
+                
+                // Update UI Labels
+                document.getElementById('repTypeLabel').innerText = result.report_type;
                 document.getElementById('repCamps').innerText = result.data.new_activities_launched;
                 document.getElementById('repTrans').innerText = result.data.transactions_count;
-                document.getElementById('repFunds').innerText = "$" + result.data.total_donations_amount.toFixed(2);
-                document.getElementById('repDate').innerText = `Period: ${new Date(result.data.period_start).toLocaleDateString()} to ${new Date(result.data.period_end).toLocaleDateString()}`;
-            } else alert("Failed to generate report");
+                
+                // Format Currency
+                const totalStr = "$" + parseFloat(result.data.total_donations_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('repFunds').innerText = totalStr;
+                
+                // Format Date Period
+                const start = result.data.period_start.split('T')[0];
+                const end = result.data.period_end.split('T')[0];
+                document.getElementById('repDate').innerText = `Period: ${start} to ${end}`;
+            } else {
+                alert("Failed to generate report. Check console.");
+            }
         }
     </script>
 </body>

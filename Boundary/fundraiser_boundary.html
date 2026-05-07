@@ -2,150 +2,317 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fundraiser Boundary · Fundraising System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Fundraiser Portal · Fundraising System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body class="bg-[#F8FAFC] min-h-screen text-slate-800 font-inter">
+<body class="text-slate-800 flex h-screen overflow-hidden">
 
-    <div id="loginView" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-96">
-            <h2 class="text-2xl font-bold text-amber-600 mb-6 text-center">Fundraiser Login</h2>
-            <input type="email" id="loginEmail" placeholder="Email" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50">
-            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-6 px-4 py-2 border rounded-xl bg-slate-50">
-            <button onclick="login()" class="w-full bg-amber-500 text-white font-bold py-2 rounded-xl hover:bg-amber-600">Enter Dashboard</button>
+    <div id="loginView" class="fixed inset-0 bg-amber-50 flex items-center justify-center z-50">
+        <div class="bg-white p-10 rounded-[2rem] shadow-2xl border border-amber-100 w-[420px]">
+            <div class="text-center mb-10">
+                <div class="bg-gradient-to-br from-amber-400 to-amber-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg shadow-amber-200">✨</div>
+                <h2 class="text-3xl font-extrabold text-slate-900">Fundraiser</h2>
+                <p class="text-sm text-slate-500 mt-2">Log in to launch your campaign</p>
+            </div>
+            <input type="email" id="loginEmail" placeholder="Fundraiser Email" class="w-full mb-4 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all text-sm font-medium">
+            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-8 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all text-sm font-medium">
+            <button onclick="login()" class="w-full bg-amber-500 text-white font-bold py-4 rounded-2xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 transform hover:-translate-y-0.5">Enter Workspace</button>
         </div>
     </div>
 
-    <div id="dashboardView" class="hidden">
-        <nav class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-            <h1 class="text-xl font-bold text-amber-600">Fundraiser Workspace</h1>
-            <button onclick="logout()" class="text-slate-500 font-medium hover:text-rose-500">Logout</button>
-        </nav>
-
-        <div class="max-w-6xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-                <h3 class="text-xl font-bold text-slate-800 mb-6">Launch Activity</h3>
-                <input type="text" id="caTitle" placeholder="Campaign Title (Min 5 chars)" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50">
-                <textarea id="caDesc" placeholder="Description (Min 10 chars)" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50 h-24"></textarea>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <input type="number" id="caCat" placeholder="Category ID" class="w-full px-4 py-2 border rounded-xl bg-slate-50">
-                    <input type="number" id="caGoal" placeholder="Goal ($)" class="w-full px-4 py-2 border rounded-xl bg-slate-50">
-                </div>
-                <button onclick="createActivity()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800">Launch Campaign</button>
+    <div id="dashboardView" class="hidden w-full h-full flex">
+        
+        <div class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl z-20 relative">
+            <div class="p-8">
+                <h1 class="text-2xl font-extrabold text-white flex items-center gap-2 mb-10 tracking-tight">
+                    <span class="text-amber-500">✨ Impact</span>Maker
+                </h1>
+                <nav class="flex flex-col gap-3">
+                    <button onclick="switchTab('ongoing')" id="nav-ongoing" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-amber-400 font-bold transition-all">🚀 Ongoing Campaigns</button>
+                    <button onclick="switchTab('history')" id="nav-history" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all">📚 Past History</button>
+                    <button onclick="switchTab('create')" id="nav-create" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all flex items-center justify-between">
+                        Launch New <span class="bg-amber-500 text-white text-xs px-2 py-1 rounded-md">+</span>
+                    </button>
+                </nav>
             </div>
+            <div class="p-6 border-t border-slate-800">
+                <button onclick="logout()" class="w-full text-left px-4 py-3 text-rose-400 font-bold hover:bg-slate-800 rounded-xl transition-colors">🚪 Logout</button>
+            </div>
+        </div>
 
-            <div class="col-span-2 space-y-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 class="text-xl font-bold text-slate-800 mb-4">My Ongoing Campaigns</h3>
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="searchOngoing" placeholder="Search active titles..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
-                        <button onclick="loadOngoing()" class="bg-amber-100 text-amber-700 px-6 font-bold rounded-xl">Search</button>
+        <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto relative">
+            
+            <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
+                <div>
+                    <h2 id="pageTitle" class="text-3xl font-extrabold text-slate-900 tracking-tight">Workspace</h2>
+                    <p id="pageSubtitle" class="text-sm text-slate-500 font-medium mt-1">Manage your fundraising activities</p>
+                </div>
+                <div id="searchContainer" class="flex gap-2 w-96">
+                    <input type="text" id="searchInput" placeholder="Search by title..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                    <button onclick="executeSearch()" class="bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 text-sm">Search</button>
+                </div>
+            </header>
+
+            <div class="p-10">
+                
+                <div id="section-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     </div>
-                    <div id="ongoingList" class="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto"></div>
+
+                <div id="section-create" class="hidden max-w-3xl">
+                    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Campaign Title</label>
+                                <input type="text" id="createTitle" placeholder="e.g., Save the Ocean 2026" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all font-bold text-lg">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Detailed Description</label>
+                                <textarea id="createDesc" rows="4" placeholder="Explain your cause..." class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Category ID</label>
+                                <input type="number" id="createCategory" placeholder="e.g., 1 (Health), 2 (Edu)" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target Amount ($)</label>
+                                <input type="number" id="createTarget" placeholder="e.g., 5000" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold text-emerald-600">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <input type="checkbox" id="createPrivate" class="w-5 h-5 text-amber-500 rounded focus:ring-amber-500">
+                            <div>
+                                <span class="text-sm font-bold text-slate-800 block">Make this campaign private</span>
+                                <span class="text-xs text-slate-500">Only visible via direct links.</span>
+                            </div>
+                        </div>
+                        <button onclick="createActivity()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-transform active:scale-[0.98] shadow-lg">🚀 Publish Campaign</button>
+                    </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 class="text-xl font-bold text-slate-800 mb-4">Campaign History</h3>
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="searchHistory" placeholder="Search closed titles..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
-                        <button onclick="loadHistory()" class="bg-slate-200 text-slate-700 px-6 font-bold rounded-xl">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="statsModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-[450px] overflow-hidden transform transition-all border border-slate-100">
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Performance Stats</div>
+                        <h3 id="statTitle" class="text-xl font-bold text-slate-900 leading-tight line-clamp-2">Activity Title</h3>
                     </div>
-                    <div id="historyList" class="grid grid-cols-2 gap-4 max-h-[300px] overflow-y-auto"></div>
+                    <button onclick="closeStats()" class="text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center font-bold transition-colors">&times;</button>
                 </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100 text-center">
+                        <div class="text-3xl font-black text-blue-600 mb-1" id="statViews">0</div>
+                        <div class="text-xs font-bold text-blue-400 uppercase tracking-widest">Total Views</div>
+                    </div>
+                    <div class="bg-rose-50 p-6 rounded-2xl border border-rose-100 text-center">
+                        <div class="text-3xl font-black text-rose-600 mb-1" id="statShortlist">0</div>
+                        <div class="text-xs font-bold text-rose-400 uppercase tracking-widest">Shortlisted (Favs)</div>
+                    </div>
+                </div>
+                <button onclick="closeStats()" class="w-full mt-6 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors">Close Dashboard</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API = 'http://localhost:8000/fundraiser';
-        
+        const API = 'http://127.0.0.1:8000';
+        let token = localStorage.getItem('fundToken') || null;
+        let currentTab = 'ongoing'; 
+
+        if(token) showDashboard();
+
         function getHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('fundToken')}`
-            };
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
         }
 
+        // --- AUTH (Story 18, 19) ---
         async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPass').value;
-            const res = await fetch(`${API}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            if(res.ok) {
+            try {
+                const res = await fetch(`${API}/fundraiser/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
                 const data = await res.json();
-                localStorage.setItem('fundToken', data.access_token);
-                document.getElementById('loginView').classList.add('hidden');
-                document.getElementById('dashboardView').classList.remove('hidden');
-                loadOngoing();
-                loadHistory();
-            } else alert("Login failed");
+                if (res.ok) {
+                    token = data.access_token;
+                    localStorage.setItem('fundToken', token);
+                    showDashboard();
+                } else alert(data.detail || "Login failed");
+            } catch (err) { alert("Server error."); }
         }
 
-        function logout() {
-            localStorage.removeItem('fundToken');
-            location.reload();
+        async function logout() {
+            if(confirm("Log out of your Fundraiser account?")) {
+                await fetch(`${API}/fundraiser/logout`, { method: 'POST', headers: getHeaders() });
+                localStorage.removeItem('fundToken');
+                token = null;
+                document.getElementById('loginView').style.display = 'flex';
+                document.getElementById('dashboardView').style.display = 'none';
+            }
         }
 
-        async function createActivity() {
-            const body = {
-                title: document.getElementById('caTitle').value,
-                description: document.getElementById('caDesc').value,
-                category_id: parseInt(document.getElementById('caCat').value),
-                target_amount: parseFloat(document.getElementById('caGoal').value),
-                is_private: false
-            };
-            const res = await fetch(`${API}/activities`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
-            if(res.ok) { alert("Created successfully!"); loadOngoing(); } 
-            else { const err = await res.json(); alert("Error: " + err.detail); }
+        function showDashboard() {
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'flex';
+            switchTab('ongoing');
         }
 
-        async function loadOngoing() {
-            const q = document.getElementById('searchOngoing').value;
-            const res = await fetch(`${API}/activities${q ? '?title='+q : ''}`, { headers: getHeaders() });
-            const data = await res.json();
-            document.getElementById('ongoingList').innerHTML = data.filter(a => a.status !== 'Suspended' && a.status !== 'Closed').map(act => `
-                <div class="bg-amber-50 p-5 rounded-2xl border border-amber-100">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold text-amber-900">${act.title}</h4>
-                        <button onclick="updateTitle(${act.activity_id})" class="text-xs text-amber-600 underline">Edit Title</button>
+        // --- NAVIGATION & SEARCH ---
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('searchInput').value = '';
+            
+            const activeClass = "text-left px-4 py-3 rounded-xl bg-slate-800 text-amber-400 font-bold transition-all";
+            const inactiveClass = "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all";
+            
+            document.getElementById('nav-ongoing').className = tab === 'ongoing' ? activeClass : inactiveClass;
+            document.getElementById('nav-history').className = tab === 'history' ? activeClass : inactiveClass;
+            
+            // "Create" button has a span inside, handle carefully
+            document.getElementById('nav-create').className = tab === 'create' ? 
+                "text-left px-4 py-3 rounded-xl bg-amber-500 text-white font-bold transition-all flex items-center justify-between" : 
+                "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all flex items-center justify-between";
+
+            document.getElementById('section-list').style.display = (tab === 'ongoing' || tab === 'history') ? 'grid' : 'none';
+            document.getElementById('section-create').style.display = tab === 'create' ? 'block' : 'none';
+            document.getElementById('searchContainer').style.visibility = tab === 'create' ? 'hidden' : 'visible';
+            
+            if(tab === 'ongoing') { 
+                document.getElementById('pageTitle').innerText = "🚀 Ongoing Campaigns"; 
+                document.getElementById('pageSubtitle').innerText = "Manage and track your active fundraising goals.";
+                loadActivities(`${API}/fundraiser/activities`, true); 
+            }
+            if(tab === 'history') { 
+                document.getElementById('pageTitle').innerText = "📚 Past History"; 
+                document.getElementById('pageSubtitle').innerText = "Review closed or suspended campaigns.";
+                loadActivities(`${API}/fundraiser/history`, false); 
+            }
+            if(tab === 'create') { 
+                document.getElementById('pageTitle').innerText = "Launch New Campaign"; 
+                document.getElementById('pageSubtitle').innerText = "Fill out the details below to start raising funds.";
+            }
+        }
+
+        function executeSearch() {
+            const query = document.getElementById('searchInput').value;
+            const route = currentTab === 'ongoing' ? 'activities' : 'history';
+            loadActivities(`${API}/fundraiser/${route}${query ? '?title='+query : ''}`, currentTab === 'ongoing');
+        }
+
+        // --- ACTIVITIES LISTING (Story 14, 17, 22, 23) ---
+        async function loadActivities(url, isOngoing) {
+            const res = await fetch(url, { headers: getHeaders() });
+            if(res.status === 401 || res.status === 403) return logout();
+            const activities = await res.json();
+            
+            document.getElementById('section-list').innerHTML = activities.map(a => {
+                const progress = Math.min((a.current_amount / a.target_amount) * 100, 100);
+                return `
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="${isOngoing ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'} text-xs font-black px-3 py-1 rounded-md tracking-widest uppercase">${a.status}</span>
+                        ${isOngoing ? `<button onclick="viewStats(${a.activity_id})" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg hover:bg-indigo-100 transition-colors">📊 Track Data</button>` : ''}
                     </div>
-                    <p class="text-sm text-slate-500 mb-4">Goal: $${act.target_amount} | Raised: $${act.current_amount}</p>
-                    <button onclick="suspendActivity(${act.activity_id})" class="w-full bg-rose-50 text-rose-600 font-bold py-2 rounded-xl hover:bg-rose-100">Suspend / Close</button>
+                    <h3 class="font-bold text-xl text-slate-900 mb-2 truncate">${a.title}</h3>
+                    <p class="text-sm text-slate-500 line-clamp-2 mb-6">${a.description}</p>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between text-xs font-bold text-slate-800 mb-2">
+                            <span>$${a.current_amount.toFixed(2)} raised</span>
+                            <span class="text-slate-400">Goal: $${a.target_amount.toFixed(2)}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="${isOngoing ? 'bg-amber-500' : 'bg-slate-400'} h-2 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+
+                    ${isOngoing ? `
+                    <div class="flex gap-2 border-t border-slate-100 pt-4">
+                        <button onclick="updateTitle(${a.activity_id}, '${a.title}')" class="flex-1 text-sm font-bold text-slate-700 bg-slate-100 py-2 rounded-xl hover:bg-slate-200 transition-colors">Edit Title</button>
+                        <button onclick="suspendActivity(${a.activity_id})" class="flex-1 text-sm font-bold text-rose-600 bg-rose-50 py-2 rounded-xl hover:bg-rose-100 transition-colors">Suspend</button>
+                    </div>` : `
+                    <div class="border-t border-slate-100 pt-4 text-center">
+                        <button onclick="viewPastDetail(${a.activity_id})" class="text-sm font-bold text-slate-500 hover:text-slate-800">View Full Archive</button>
+                    </div>
+                    `}
                 </div>
-            `).join('');
+            `}).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No records found.</div>`;
         }
 
-        async function updateTitle(id) {
-            const newTitle = prompt("Enter new title:");
-            if(!newTitle) return;
-            const res = await fetch(`${API}/activities/${id}?title=${encodeURIComponent(newTitle)}`, { 
+        // --- CREATE ACTIVITY (Story 13) ---
+        async function createActivity() {
+            const title = document.getElementById('createTitle').value;
+            const description = document.getElementById('createDesc').value;
+            const category_id = parseInt(document.getElementById('createCategory').value);
+            const target_amount = parseFloat(document.getElementById('createTarget').value);
+            const is_private = document.getElementById('createPrivate').checked;
+
+            if(!title || !description || !category_id || !target_amount) return alert("Please fill all required fields correctly.");
+
+            const res = await fetch(`${API}/fundraiser/activities`, {
+                method: 'POST', headers: getHeaders(),
+                body: JSON.stringify({ title, description, category_id, target_amount, is_private })
+            });
+
+            const data = await res.json();
+            if(res.ok) {
+                alert("🎉 Campaign Published Successfully!");
+                document.getElementById('createTitle').value = '';
+                document.getElementById('createDesc').value = '';
+                document.getElementById('createTarget').value = '';
+                switchTab('ongoing'); // Redirect to dashboard
+            } else alert(data.detail);
+        }
+
+        // --- UPDATE & SUSPEND (Story 15, 16) ---
+        async function updateTitle(id, currentTitle) {
+            const newTitle = prompt("Update Campaign Title:", currentTitle);
+            if(!newTitle || newTitle === currentTitle) return;
+            const res = await fetch(`${API}/fundraiser/activities/${id}?title=${encodeURIComponent(newTitle)}`, { 
                 method: 'PATCH', headers: getHeaders() 
             });
-            if(res.ok) { alert("Updated"); loadOngoing(); }
+            if(res.ok) executeSearch();
+            else alert("Failed to update.");
         }
 
         async function suspendActivity(id) {
-            await fetch(`${API}/activities/${id}/suspend`, { method: 'POST', headers: getHeaders() });
-            loadOngoing();
-            loadHistory();
+            if(!confirm("Are you sure you want to suspend this campaign? It will be moved to History.")) return;
+            await fetch(`${API}/fundraiser/activities/${id}/suspend`, { method: 'POST', headers: getHeaders() });
+            executeSearch();
         }
 
-        async function loadHistory() {
-            const q = document.getElementById('searchHistory').value;
-            const res = await fetch(`${API}/history${q ? '?title='+q : ''}`, { headers: getHeaders() });
+        // --- STATS & HISTORY VIEW (Story 20, 23) ---
+        async function viewStats(id) {
+            const res = await fetch(`${API}/fundraiser/activities/${id}/stats`, { headers: getHeaders() });
+            if(!res.ok) return alert("Failed to load stats.");
             const data = await res.json();
-            document.getElementById('historyList').innerHTML = data.map(act => `
-                <div class="bg-slate-100 p-5 rounded-2xl border border-slate-200 opacity-75">
-                    <h4 class="font-bold text-slate-600">${act.title}</h4>
-                    <p class="text-sm text-slate-500 mt-1">Goal: $${act.target_amount} | Final: $${act.current_amount}</p>
-                    <span class="inline-block mt-2 px-2 py-1 bg-slate-200 text-slate-500 text-xs font-bold rounded">${act.status}</span>
-                </div>
-            `).join('');
+            
+            document.getElementById('statTitle').innerText = data.title;
+            document.getElementById('statViews').innerText = data.views;
+            document.getElementById('statShortlist').innerText = data.shortlisted_times;
+            document.getElementById('statsModal').classList.remove('hidden');
+        }
+
+        function closeStats() {
+            document.getElementById('statsModal').classList.add('hidden');
+        }
+
+        async function viewPastDetail(id) {
+            const res = await fetch(`${API}/fundraiser/history/${id}`, { headers: getHeaders() });
+            const data = await res.json();
+            alert(`ARCHIVE DETAIL\n\nTitle: ${data.title}\nFinal Amount: $${data.current_amount}\nGoal: $${data.target_amount}\nStatus: ${data.status}\nDesc: ${data.description}`);
         }
     </script>
 </body>

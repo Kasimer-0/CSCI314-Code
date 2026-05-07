@@ -4,13 +4,32 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 
 from dependencies import get_fundraiser
-from Entities.fundraising_activity import FundraisingActivityEntity, ActivityCreate
+from Entities.fundraising_activity import (
+    FundraisingActivityEntity, 
+    ActivityCreate,
+    FundraiserLoginRequest,
+    FundraiserToken
+)
 
 router = APIRouter(prefix="/fundraiser", tags=["Fundraiser Controller (BCE Class Mode)"])
 
 # ============================================================
-# --- Controller Classes （Story 13 - 23）---
+# --- Controller Classes （Story 13 - 23 + Login/Logout）---
 # ============================================================
+
+class LoginFundraiserController:
+    def execute(self, login_data: FundraiserLoginRequest):
+        """Story 18: Login to my account"""
+        token_response, error = FundraisingActivityEntity.login_fundraiser(login_data)
+        if error:
+            status_code = 401 if "Incorrect" in error else 403
+            raise HTTPException(status_code=status_code, detail=error)
+        return token_response
+
+class LogoutFundraiserController:
+    def execute(self):
+        """Story 19: Logout of my account"""
+        return {"message": "Successfully logged out. Please discard your token."}
 
 class CreateFundraisingActivityController:
     def execute(self, activity_data: ActivityCreate, profile_id: int):
@@ -48,16 +67,20 @@ class SearchFundraisingActivitiesController:
     def execute(self, title: Optional[str], profile_id: int):
         """Story 17: Search for fundraising activities"""
         activities, error = FundraisingActivityEntity.search_activities(title, profile_id)
-        if error:
-            raise HTTPException(status_code=500, detail=error)
         return activities
+
+class TrackActivityController:
+    def execute(self, activity_id: int, profile_id: int):
+        """Story 20: Track the potential interests on FSA (views, shortlisted times)"""
+        stats, error = FundraisingActivityEntity.get_activity_stats(activity_id, profile_id)
+        if error:
+            raise HTTPException(status_code=404, detail=error)
+        return stats
 
 class SearchPastActivitiesController:
     def execute(self, title: Optional[str], profile_id: int):
         """Story 22: Search for the history of past fundraising activities"""
         history, error = FundraisingActivityEntity.search_history(title, profile_id)
-        if error:
-            raise HTTPException(status_code=500, detail=error)
         return history
 
 class ViewPastActivityController:
@@ -68,10 +91,17 @@ class ViewPastActivityController:
             raise HTTPException(status_code=404, detail="Past activity not found.")
         return activity
 
-
 # ============================================================
 # Route binding: Instantiate these classes and call execute()
 # ============================================================
+
+@router.post("/login", response_model=FundraiserToken)
+def route_fundraiser_login(login_data: FundraiserLoginRequest):
+    return LoginFundraiserController().execute(login_data)
+
+@router.post("/logout")
+def route_fundraiser_logout(fr_user=Depends(get_fundraiser)):
+    return LogoutFundraiserController().execute()
 
 @router.post("/activities")
 def route_create_fundraising_activity(activity_data: ActivityCreate, fr_user=Depends(get_fundraiser)):
@@ -92,6 +122,10 @@ def route_suspend_fundraising_activity(activity_id: int, fr_user=Depends(get_fun
 @router.get("/activities")
 def route_search_fundraising_activities(title: Optional[str] = Query(None), fr_user=Depends(get_fundraiser)):
     return SearchFundraisingActivitiesController().execute(title, fr_user.profile.profile_id)
+
+@router.get("/activities/{activity_id}/stats")
+def route_track_activity_stats(activity_id: int, fr_user=Depends(get_fundraiser)):
+    return TrackActivityController().execute(activity_id, fr_user.profile.profile_id)
 
 @router.get("/history")
 def route_search_past_activities(title: Optional[str] = Query(None), fr_user=Depends(get_fundraiser)):

@@ -16,7 +16,7 @@ from Entities.platform_manager_action import (
 router = APIRouter(prefix="/platform", tags=["Platform Manager Controller (BCE Class Mode)"])
 
 # ============================================================
-# --- Controller Classes （Story 38 - 41）---
+# --- Controller Classes （Story 33 - 42）---
 # ============================================================
 
 class ManagerLoginController:
@@ -105,7 +105,7 @@ class GenerateMonthlyReportController:
 
 
 # ============================================================
-#Route binding: Instantiate these classes and call execute()
+#  Route binding: Instantiate these classes and call execute()
 # ============================================================
 
 @router.post("/login", response_model=PlatformManagerToken)

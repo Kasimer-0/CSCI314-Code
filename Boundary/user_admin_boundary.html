@@ -2,266 +2,277 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Boundary · Fundraising System</title>
+    <title>User Admin Boundary · Fundraising System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 2px solid #0f172a; color: #0f172a; font-weight: 700; }
+        .tab-inactive { color: #64748b; font-weight: 500; }
+        .tab-inactive:hover { color: #0f172a; }
+    </style>
 </head>
-<body class="bg-[#F8FAFC] min-h-screen text-slate-800 font-inter">
+<body class="bg-slate-50 min-h-screen text-slate-800 flex">
 
-    <div id="loginView" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-96">
-            <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center">User Admin Login</h2>
-            <input type="email" id="loginEmail" placeholder="Admin Email" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50">
-            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-6 px-4 py-2 border rounded-xl bg-slate-50">
-            <button onclick="login()" class="w-full bg-slate-900 text-white font-bold py-2 rounded-xl hover:bg-slate-800">Sign In</button>
+    <div id="loginView" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-50">
+        <div class="bg-white p-10 rounded-3xl shadow-xl border border-slate-200 w-[400px]">
+            <div class="text-center mb-8">
+                <div class="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">A</div>
+                <h2 class="text-2xl font-bold text-slate-900">Admin Portal</h2>
+                <p class="text-sm text-slate-500 mt-1">System Administration</p>
+            </div>
+            <input type="email" id="loginEmail" placeholder="Admin Email" class="w-full mb-4 px-4 py-3 border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
+            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-6 px-4 py-3 border border-slate-300 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all">
+            <button onclick="login()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors shadow-md">Sign In</button>
         </div>
     </div>
 
-    <div id="dashboardView" class="hidden">
-        <nav class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-            <h1 class="text-xl font-bold text-slate-900">Admin Control Panel</h1>
-            <button onclick="logout()" class="text-slate-500 font-medium hover:text-rose-500">Logout (Story 12)</button>
-        </nav>
+    <div id="dashboardView" class="hidden w-full flex min-h-screen">
+        
+        <div class="w-64 bg-slate-900 text-white flex flex-col justify-between">
+            <div class="p-6">
+                <h1 class="text-xl font-bold tracking-wider flex items-center gap-2 mb-10">
+                    <span class="bg-white text-slate-900 px-2 py-1 rounded-md text-sm">SYS</span> ADMIN
+                </h1>
+                <nav class="flex flex-col gap-2">
+                    <button onclick="switchTab('accounts')" id="nav-accounts" class="text-left px-4 py-3 rounded-xl bg-slate-800 font-semibold transition-colors">🔐 Accounts (Story 6-10)</button>
+                    <button onclick="switchTab('profiles')" id="nav-profiles" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-300 font-semibold transition-colors">👤 Profiles (Story 1-5)</button>
+                </nav>
+            </div>
+            <div class="p-6 border-t border-slate-800">
+                <button onclick="logout()" class="w-full text-left px-4 py-3 text-rose-400 font-bold hover:bg-slate-800 rounded-xl transition-colors">🚪 Logout</button>
+            </div>
+        </div>
 
-        <div class="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="flex-1 p-10 h-screen overflow-y-auto">
             
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-xl font-bold text-slate-800 mb-4">Core Accounts</h3>
-                
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <input type="email" id="accEmail" placeholder="Email Address" class="px-4 py-2 border rounded-xl bg-slate-50">
-                    <input type="password" id="accPass" placeholder="Password (Min 6)" class="px-4 py-2 border rounded-xl bg-slate-50">
-                    <button onclick="createAccount()" class="col-span-2 bg-slate-900 text-white font-bold py-2 rounded-xl">Create User Account</button>
+            <div id="section-accounts">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-900">User Accounts</h2>
+                        <p class="text-slate-500 mt-1">Manage system access credentials</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="text" id="searchAccEmail" placeholder="Search by email..." class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900">
+                        <button onclick="loadAccounts()" class="bg-slate-200 text-slate-800 px-4 py-2 font-bold rounded-lg hover:bg-slate-300">Search</button>
+                    </div>
                 </div>
-                
-                <hr class="my-6 border-slate-100">
-                
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="searchAccInput" placeholder="Search by email..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
-                    <button onclick="searchAccounts()" class="bg-slate-200 text-slate-700 px-6 font-bold rounded-xl">Filter</button>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8 flex items-end gap-4">
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">New User Email</label>
+                        <input type="email" id="newAccEmail" class="w-full mt-1 px-4 py-2 border rounded-lg bg-slate-50" placeholder="user@example.com">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
+                        <input type="password" id="newAccPass" class="w-full mt-1 px-4 py-2 border rounded-lg bg-slate-50" placeholder="min 6 chars">
+                    </div>
+                    <button onclick="createAccount()" class="bg-slate-900 text-white font-bold px-6 py-2 rounded-lg hover:bg-slate-800 h-[42px]">Create Account</button>
                 </div>
-                
-                <div id="accountsList" class="space-y-2 max-h-[400px] overflow-y-auto"></div>
+
+                <div id="accountsList" class="grid grid-cols-1 gap-3"></div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-xl font-bold text-slate-800 mb-4">User Profiles</h3>
-                
-                <div class="grid grid-cols-3 gap-4 mb-4">
-                    <input type="number" id="profAccId" placeholder="Account ID" class="px-4 py-2 border rounded-xl bg-slate-50">
-                    <input type="text" id="profUser" placeholder="Username" class="px-4 py-2 border rounded-xl bg-slate-50">
-                    <select id="profRole" class="px-4 py-2 border rounded-xl bg-slate-50">
-                        <option value="1">Donee (Role 1)</option>
-                        <option value="2">Fundraiser (Role 2)</option>
-                        <option value="3">Manager (Role 3)</option>
-                    </select>
-                    <button onclick="createProfile()" class="col-span-3 bg-blue-600 text-white font-bold py-2 rounded-xl">Link Profile to Account</button>
+            <div id="section-profiles" class="hidden">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-900">User Profiles</h2>
+                        <p class="text-slate-500 mt-1">Manage personal details and roles</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="text" id="searchProfileName" placeholder="Search by username..." class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900">
+                        <button onclick="loadProfiles()" class="bg-slate-200 text-slate-800 px-4 py-2 font-bold rounded-lg hover:bg-slate-300">Search</button>
+                    </div>
                 </div>
-                
-                <hr class="my-6 border-slate-100">
-                
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="searchProfInput" placeholder="Search by username..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
-                    <button onclick="searchProfiles()" class="bg-slate-200 text-slate-700 px-6 font-bold rounded-xl">Filter</button>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8 grid grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Account ID</label>
+                        <input type="number" id="newProfAccId" class="w-full mt-1 px-3 py-2 border rounded-lg bg-slate-50" placeholder="e.g. 15">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Username</label>
+                        <input type="text" id="newProfName" class="w-full mt-1 px-3 py-2 border rounded-lg bg-slate-50" placeholder="Full Name">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
+                        <select id="newProfRole" class="w-full mt-1 px-3 py-2 border rounded-lg bg-slate-50">
+                            <option value="1">1 - Donee</option>
+                            <option value="2">2 - Fundraiser</option>
+                            <option value="3">3 - Platform Manager</option>
+                            <option value="0">0 - Admin</option>
+                        </select>
+                    </div>
+                    <button onclick="createProfile()" class="bg-slate-900 text-white font-bold px-4 py-2 rounded-lg hover:bg-slate-800 h-[42px]">Link Profile</button>
                 </div>
-                
-                <div id="profilesList" class="space-y-2 max-h-[400px] overflow-y-auto"></div>
+
+                <div id="profilesList" class="grid grid-cols-2 gap-4"></div>
             </div>
+
         </div>
     </div>
 
     <script>
-        const API = 'http://localhost:8000/user-admin';
-        
+        const API = 'http://127.0.0.1:8000';
+        let token = localStorage.getItem('adminToken') || null;
+
+        if(token) showDashboard();
+
         function getHeaders() {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-            };
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
         }
 
-        // --- Auth (Story 11 & 12) ---
+        // --- Auth (Story 11, 12) ---
         async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
             try {
-                const res = await fetch(`${API}/login`, {
+                const res = await fetch(`${API}/user-admin/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPass').value })
+                    body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-                if(res.ok) {
-                    localStorage.setItem('adminToken', data.access_token);
-                    document.getElementById('loginView').classList.add('hidden');
-                    document.getElementById('dashboardView').classList.remove('hidden');
-                    searchAccounts(); 
-                    searchProfiles();
+                if (res.ok) {
+                    token = data.access_token;
+                    localStorage.setItem('adminToken', token);
+                    showDashboard();
                 } else {
-                    alert("Login Failed: " + (data.detail || "Unknown error"));
+                    alert(data.detail || "Login failed");
                 }
-            } catch(e) { alert("Network error: Is backend running?"); }
+            } catch (err) { alert("Server connection error."); }
         }
 
-        function logout() { localStorage.removeItem('adminToken'); location.reload(); }
-
-        // ==========================================
-        // --- Accounts Management (Story 6-10) ---
-        // ==========================================
-        async function createAccount() {
-            try {
-                const body = JSON.stringify({ email: document.getElementById('accEmail').value, password: document.getElementById('accPass').value });
-                const res = await fetch(`${API}/accounts`, { method: 'POST', headers: getHeaders(), body });
-                const data = await res.json();
-                if(res.ok) { alert("Account Created!"); searchAccounts(); } 
-                else { alert("Failed: " + JSON.stringify(data.detail || data)); }
-            } catch(e) { console.error(e); }
-        }
-
-        async function searchAccounts() {
-            try {
-                const q = document.getElementById('searchAccInput').value;
-                const res = await fetch(`${API}/accounts${q ? '?email='+q : ''}`, { headers: getHeaders() });
-                const data = await res.json();
-                
-                if (!res.ok) throw new Error(data.detail || "Server Error");
-                if (!Array.isArray(data)) throw new Error("Format error");
-
-                document.getElementById('accountsList').innerHTML = data.map(a => `
-                    <div class="flex flex-col p-4 bg-slate-50 rounded-xl border border-slate-100 mb-2 hover:border-slate-300 transition-colors">
-                        <div class="flex justify-between items-center">
-                            <div><b>ID: ${a.account_id}</b> | ${a.email} <span class="ml-2 text-xs bg-gray-200 px-2 rounded font-bold">${a.status}</span></div>
-                            <div class="flex gap-3">
-                                <button onclick="viewAccount(${a.account_id})" class="text-emerald-600 text-sm font-bold hover:underline">View</button>
-                                <button onclick="updateAccount(${a.account_id}, '${a.email}')" class="text-blue-600 text-sm font-bold hover:underline">Edit Email</button>
-                                ${a.is_suspended ? '' : `<button onclick="suspendAccount(${a.account_id})" class="text-rose-600 text-sm font-bold hover:underline">Suspend</button>`}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                document.getElementById('accountsList').innerHTML = `<p class="text-rose-500 font-bold p-4">Error: ${err.message}</p>`;
+        async function logout() {
+            if(confirm("Are you sure you want to logout?")) {
+                await fetch(`${API}/user-admin/logout`, { method: 'POST', headers: getHeaders() });
+                localStorage.removeItem('adminToken');
+                token = null;
+                document.getElementById('loginView').style.display = 'flex';
+                document.getElementById('dashboardView').style.display = 'none';
             }
         }
 
-        async function viewAccount(id) {
-            try {
-                const res = await fetch(`${API}/accounts/${id}`, { headers: getHeaders() });
-                if(res.ok) {
-                    const data = await res.json();
-                    alert(`--- Account Information ---\nID: ${data.account_id}\nEmail: ${data.email}\nStatus: ${data.status}\nSuspended: ${data.is_suspended}`);
-                } else alert("Failed to fetch details");
-            } catch(e) { alert("Network Error"); }
+        function showDashboard() {
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'flex';
+            loadAccounts();
         }
 
-        async function updateAccount(id, currentEmail) {
-            const newEmail = prompt(`Enter new email for Account ID ${id}:`, currentEmail);
-            if (!newEmail || newEmail === currentEmail) return;
+        function switchTab(tab) {
+            document.getElementById('section-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
+            document.getElementById('section-profiles').style.display = tab === 'profiles' ? 'block' : 'none';
             
-            try {
-                const res = await fetch(`${API}/accounts/${id}?email=${encodeURIComponent(newEmail)}`, { 
-                    method: 'PATCH', 
-                    headers: getHeaders() 
-                });
-                if(res.ok) { searchAccounts(); alert("Account Email Updated!"); }
-                else { const d = await res.json(); alert("Update Failed: " + (d.detail || "Error")); }
-            } catch(e) { alert("Network Error"); }
+            document.getElementById('nav-accounts').className = tab === 'accounts' ? "text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-semibold transition-colors" : "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-300 font-semibold transition-colors";
+            document.getElementById('nav-profiles').className = tab === 'profiles' ? "text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-semibold transition-colors" : "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-300 font-semibold transition-colors";
+            
+            if(tab === 'profiles') loadProfiles();
+        }
+
+        // --- Accounts (Story 6-10) ---
+        async function loadAccounts() {
+            const q = document.getElementById('searchAccEmail').value;
+            const res = await fetch(`${API}/user-admin/accounts${q ? '?email='+q : ''}`, { headers: getHeaders() });
+            if(res.status === 401 || res.status === 403) return logout();
+            const data = await res.json();
+            
+            document.getElementById('accountsList').innerHTML = data.map(a => `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center hover:shadow-md transition-shadow">
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded mr-2">ID: ${a.user_id || a.account_id}</span>
+                        <span class="font-semibold text-slate-800">${a.email}</span>
+                        <span class="ml-3 text-xs font-bold px-2 py-1 rounded ${a.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : (a.status === 'Suspended' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')}">${a.status}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateAccount(${a.user_id || a.account_id})" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100">Edit Email</button>
+                        ${a.status !== 'Suspended' ? `<button onclick="suspendAccount(${a.user_id || a.account_id})" class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded hover:bg-rose-100">Suspend</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createAccount() {
+            const email = document.getElementById('newAccEmail').value;
+            const password = document.getElementById('newAccPass').value;
+            if(!email || !password) return alert("Fill all fields");
+            
+            const res = await fetch(`${API}/user-admin/accounts`, {
+                method: 'POST', headers: getHeaders(), body: JSON.stringify({email, password})
+            });
+            const result = await res.json();
+            if(res.ok) { alert(`Account created! Account ID is: ${result.account_id || result.user_id}`); loadAccounts(); }
+            else alert(result.detail);
+        }
+
+        async function updateAccount(id) {
+            const newEmail = prompt("Enter new email for this account:");
+            if(!newEmail) return;
+            const res = await fetch(`${API}/user-admin/accounts/${id}?email=${encodeURIComponent(newEmail)}`, {
+                method: 'PATCH', headers: getHeaders()
+            });
+            if(res.ok) loadAccounts();
+            else alert("Failed to update");
         }
 
         async function suspendAccount(id) {
-            if(!confirm("Are you sure you want to suspend this account?")) return;
-            try {
-                const res = await fetch(`${API}/accounts/${id}/suspend`, { method: 'POST', headers: getHeaders() });
-                if(res.ok) { searchAccounts(); searchProfiles(); }
-                else { const d = await res.json(); alert(d.detail); }
-            } catch(e) { alert("Network Error"); }
+            if(!confirm("Suspend this account? This cannot be undone from UI.")) return;
+            await fetch(`${API}/user-admin/accounts/${id}/suspend`, { method: 'POST', headers: getHeaders() });
+            loadAccounts();
         }
 
-        // ==========================================
-        // --- Profiles Management (Story 1-5) ---
-        // ==========================================
+        // --- Profiles (Story 1-5) ---
+        async function loadProfiles() {
+            const q = document.getElementById('searchProfileName').value;
+            const res = await fetch(`${API}/user-admin/profiles${q ? '?username='+q : ''}`, { headers: getHeaders() });
+            const data = await res.json();
+            
+            const roleNames = {0: "Admin", 1: "Donee", 2: "Fundraiser", 3: "Platform Mgr"};
+            
+            document.getElementById('profilesList').innerHTML = data.map(p => `
+                <div class="bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">${p.username}</h3>
+                            <p class="text-xs text-slate-500">Profile ID: ${p.profile_id} | Linked Acc: ${p.account_id}</p>
+                        </div>
+                        <span class="text-xs font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-100">${roleNames[p.role_id] || p.role_id}</span>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="viewProfile(${p.profile_id})" class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded hover:bg-slate-200">View Details</button>
+                        <button onclick="updateProfile(${p.profile_id}, '${p.username}')" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100">Edit</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         async function createProfile() {
-            try {
-                const body = JSON.stringify({ 
-                    account_id: parseInt(document.getElementById('profAccId').value), 
-                    username: document.getElementById('profUser').value, 
-                    role_id: parseInt(document.getElementById('profRole').value),
-                    phone_number: "000-0000"
-                });
-                const res = await fetch(`${API}/profiles`, { method: 'POST', headers: getHeaders(), body });
-                if(res.ok) { alert("Profile Created!"); searchProfiles(); } 
-                else { const data = await res.json(); alert("Failed: " + JSON.stringify(data.detail || data)); }
-            } catch(e) { console.error(e); }
+            const account_id = parseInt(document.getElementById('newProfAccId').value);
+            const username = document.getElementById('newProfName').value;
+            const role_id = parseInt(document.getElementById('newProfRole').value);
+            if(!account_id || !username) return alert("Fill required fields");
+            
+            const res = await fetch(`${API}/user-admin/profiles`, {
+                method: 'POST', headers: getHeaders(), 
+                body: JSON.stringify({account_id, username, phone_number: "", role_id})
+            });
+            if(res.ok) { alert("Profile linked!"); loadProfiles(); }
+            else { const err = await res.json(); alert(err.detail); }
         }
-
 
         async function viewProfile(id) {
-            try {
-                const res = await fetch(`${API}/profiles/${id}`, { headers: getHeaders() });
-                if(res.ok) {
-                    const data = await res.json();
-                    alert(`--- Profile Information ---\nProfile ID: ${data.profile_id}\nAccount ID: ${data.account_id}\nName: ${data.username}\nPhone: ${data.phone_number || 'N/A'}\nRole: ${data.role_id}`);
-                } else {
-                    const errText = await res.text();
-                    alert("Failed to fetch details. Server said: " + errText.substring(0, 100));
-                }
-            } catch(e) { alert("Network Error"); }
+            const res = await fetch(`${API}/user-admin/profiles/${id}`, { headers: getHeaders() });
+            const p = await res.json();
+            alert(`--- Profile Details ---\nName: ${p.username}\nPhone: ${p.phone_number || 'N/A'}\nRole ID: ${p.role_id}\nAccount ID: ${p.account_id}`);
         }
 
-        async function updateProfile(id, currentName, currentPhone, currentRole) {
-            const newName = prompt(`Step 1/3: Enter new username for Profile ID ${id}:`, currentName);
-            if (newName === null) return;
-            const newPhone = prompt(`Step 2/3: Enter new phone number:`, currentPhone);
-            if (newPhone === null) return; 
-            const newRole = prompt(`Step 3/3: Enter new Role ID\n0 = Admin\n1 = Donee\n2 = Fundraiser\n3 = Manager`, currentRole);
-            if (newRole === null || isNaN(newRole)) return; 
-
-            try {
-                const body = JSON.stringify({ username: newName, phone_number: newPhone, role_id: parseInt(newRole) });
-                const res = await fetch(`${API}/profiles/${id}`, { method: 'PATCH', headers: getHeaders(), body });
-                if(res.ok) { searchProfiles(); } 
-                else { const d = await res.json(); alert("Update Failed: " + (d.detail || "Error")); }
-            } catch(e) { alert("Network Error"); }
+        async function updateProfile(id, currentName) {
+            const newName = prompt("Update Username:", currentName);
+            if(!newName) return;
+            await fetch(`${API}/user-admin/profiles/${id}`, {
+                method: 'PATCH', headers: getHeaders(), body: JSON.stringify({username: newName})
+            });
+            loadProfiles();
         }
-
-        async function suspendProfile(id) {
-            if(!confirm("Are you sure you want to suspend this Profile? This user will still be able to log in, but their role actions will be frozen.")) return;
-            try {
-                const res = await fetch(`${API}/profiles/${id}/suspend`, { method: 'POST', headers: getHeaders() });
-                if(res.ok) { 
-                    alert("Profile has been suspended successfully!");
-                    searchProfiles(); 
-                }
-                else { const d = await res.json(); alert(d.detail); }
-            } catch(e) { alert("Network Error"); }
-        }
-
-        async function searchProfiles() {
-            try {
-                const q = document.getElementById('searchProfInput').value;
-                const res = await fetch(`${API}/profiles${q ? '?username='+q : ''}`, { headers: getHeaders() });
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.detail || "Server Error");
-
-                document.getElementById('profilesList').innerHTML = data.map(p => `
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 mb-2 hover:border-slate-300 transition-colors">
-                        <div>
-                            <b>ID: ${p.profile_id}</b> | AccID: ${p.account_id} 
-                            <span class="ml-2 text-xs bg-indigo-100 text-indigo-700 px-2 rounded font-bold">${p.status || 'Active'}</span>
-                            <br>
-                            <span class="text-sm text-slate-600">Name: ${p.username} | Role: ${p.role_id}</span>
-                        </div>
-                        <div class="flex flex-col gap-1 text-right">
-                            <button onclick="viewProfile(${p.profile_id})" class="text-emerald-600 text-sm font-bold hover:underline">View Detail</button>
-                            <button onclick="updateProfile(${p.profile_id}, '${p.username}', '${p.phone_number || ''}', ${p.role_id})" class="text-blue-600 text-sm font-bold hover:underline">Edit Profile</button>
-                            ${p.is_suspended ? '' : `<button onclick="suspendProfile(${p.profile_id})" class="text-rose-600 text-sm font-bold hover:underline">Suspend Profile</button>`}
-                        </div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                document.getElementById('profilesList').innerHTML = `<p class="text-rose-500 font-bold p-4">Error: ${err.message}</p>`;
-            }
-        }
-        
     </script>
 </body>
 </html>
