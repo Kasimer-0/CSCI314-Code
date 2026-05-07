@@ -1,0 +1,16 @@
+stages:
+  - test
+
+run_unit_tests:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - pip install -r requirements.txt
+    # Install pytest for automated testing
+    - pip install pytest httpx
+  script:
+    - echo "Running Automated Testing Pipeline for CSIT314 Sprint 3..."
+    - pytest tests/
+  only:
+    - main
+    - merge_requests
