@@ -8,132 +8,107 @@
 </head>
 <body class="bg-[#F8FAFC] min-h-screen text-slate-800 font-inter">
 
-    <!-- Login -->
     <div id="loginView" class="min-h-screen flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-sm border border-violet-200 w-96">
             <h2 class="text-2xl font-bold text-violet-700 mb-6 text-center">Manager Login</h2>
             <input type="email" id="loginEmail" placeholder="Manager Email" class="w-full mb-4 px-4 py-2 border rounded-xl bg-slate-50">
-            <input type="password" id="loginPass" placeholder="Password" class="w-full mb-6 px-4 py-2 border rounded-xl bg-slate-50">
+            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-6 px-4 py-2 border rounded-xl bg-slate-50">
             <button onclick="login()" class="w-full bg-violet-600 text-white font-bold py-2 rounded-xl hover:bg-violet-700">Enter Platform</button>
         </div>
     </div>
 
-    <!-- Dashboard -->
-    <div id="dashboardView" class="hidden flex min-h-screen">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-violet-900 text-violet-200 flex flex-col">
-            <div class="p-6 border-b border-violet-800 font-bold text-white tracking-wider">📊 PLATFORM MGR</div>
-            <nav class="p-4 space-y-2">
-                <button onclick="showTab('categoriesTab')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-violet-800 hover:text-white">🏷 Categories (S33-37)</button>
-                <button onclick="showTab('reportsTab')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-violet-800 hover:text-white">📈 Reports (S40-42)</button>
-            </nav>
-            <div class="mt-auto p-4 border-t border-violet-800">
-                <button onclick="logout()" class="w-full text-left px-4 py-2 rounded-lg hover:bg-violet-800 text-white">↩ Sign Out</button>
-            </div>
-        </aside>
+    <div id="dashboardView" class="hidden">
+        <nav class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+            <h1 class="text-xl font-bold text-violet-700">Platform Control Center</h1>
+            <button onclick="logout()" class="text-slate-500 font-medium hover:text-rose-500">Logout</button>
+        </nav>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-8">
-            <!-- Categories Tab -->
-            <div id="categoriesTab" class="tab-content">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-                    <h3 class="font-bold text-lg text-violet-900 mb-4">Create Category (S33)</h3>
-                    <div class="flex gap-4">
-                        <input type="text" id="catName" placeholder="Category Name" class="w-1/3 px-4 py-2 border rounded-xl">
-                        <input type="text" id="catDesc" placeholder="Description" class="flex-1 px-4 py-2 border rounded-xl">
-                        <button onclick="createCategory()" class="bg-violet-600 text-white px-6 py-2 rounded-xl font-bold">Add</button>
-                    </div>
+        <div class="max-w-6xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-xl font-bold text-slate-800 mb-6">Activity Categories</h3>
+                <div class="flex gap-2 mb-6">
+                    <input type="text" id="catName" placeholder="New Category Name" class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
+                    <button onclick="createCategory()" class="bg-violet-600 text-white px-6 font-bold rounded-xl">Create</button>
                 </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 class="font-bold text-lg text-violet-900 mb-4">Manage Categories (S34-37)</h3>
-                    <div class="flex gap-4 mb-4">
-                        <input type="text" id="searchCat" placeholder="Search categories..." class="flex-1 px-4 py-2 border rounded-xl">
-                        <button onclick="loadCategories()" class="bg-slate-100 text-slate-700 px-6 py-2 rounded-xl font-bold border border-slate-200">Search</button>
-                    </div>
-                    <div id="categoriesList" class="grid grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <hr class="my-4 border-slate-100">
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="searchCat" placeholder="Search categories..." class="flex-1 px-4 py-2 border rounded-xl bg-slate-50">
+                    <button onclick="loadCategories()" class="bg-slate-200 text-slate-700 px-6 font-bold rounded-xl">Filter</button>
                 </div>
+                <div id="catList" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
             </div>
 
-            <!-- Reports Tab -->
-            <div id="reportsTab" class="tab-content hidden">
-                <h3 class="font-bold text-2xl text-violet-900 mb-6">Platform Statistics (S40-42)</h3>
-                <div class="flex gap-4 mb-8">
-                    <button onclick="fetchReport('daily')" class="flex-1 bg-white border-2 border-violet-100 hover:border-violet-400 text-violet-700 font-bold py-4 rounded-2xl transition">Generate Daily Report</button>
-                    <button onclick="fetchReport('weekly')" class="flex-1 bg-white border-2 border-violet-100 hover:border-violet-400 text-violet-700 font-bold py-4 rounded-2xl transition">Generate Weekly Report</button>
-                    <button onclick="fetchReport('monthly')" class="flex-1 bg-white border-2 border-violet-100 hover:border-violet-400 text-violet-700 font-bold py-4 rounded-2xl transition">Generate Monthly Report</button>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-xl font-bold text-slate-800 mb-6">System Reports</h3>
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <button onclick="fetchReport('daily')" class="bg-violet-50 text-violet-700 font-bold py-4 rounded-xl border border-violet-100 hover:bg-violet-100">Daily Report</button>
+                    <button onclick="fetchReport('weekly')" class="bg-violet-50 text-violet-700 font-bold py-4 rounded-xl border border-violet-100 hover:bg-violet-100">Weekly Report</button>
+                    <button onclick="fetchReport('monthly')" class="bg-violet-50 text-violet-700 font-bold py-4 rounded-xl border border-violet-100 hover:bg-violet-100">Monthly Report</button>
                 </div>
 
-                <!-- Report Output -->
-                <div id="reportCanvas" class="hidden grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <p class="text-sm font-bold text-slate-400 uppercase">New Campaigns</p>
-                        <p id="repCamps" class="text-4xl font-black text-slate-800 mt-2">0</p>
+                <div id="reportCanvas" class="hidden grid-cols-2 gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    <div class="col-span-2 text-center text-sm font-bold text-slate-400 mb-2" id="repDate"></div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase">New Campaigns</p>
+                        <p class="text-3xl font-black text-slate-800 mt-2" id="repCamps">0</p>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <p class="text-sm font-bold text-slate-400 uppercase">Total Transactions</p>
-                        <p id="repTrans" class="text-4xl font-black text-blue-600 mt-2">0</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase">Transactions</p>
+                        <p class="text-3xl font-black text-slate-800 mt-2" id="repTrans">0</p>
                     </div>
-                    <div class="bg-violet-600 p-6 rounded-2xl shadow-sm text-white">
-                        <p class="text-sm font-bold text-violet-200 uppercase">Total Funds Raised</p>
-                        <p id="repFunds" class="text-4xl font-black mt-2">$0.00</p>
+                    <div class="col-span-2 bg-emerald-50 p-4 rounded-xl shadow-sm text-center border border-emerald-100">
+                        <p class="text-xs font-bold text-emerald-600 uppercase">Total Funds Raised</p>
+                        <p class="text-4xl font-black text-emerald-600 mt-2" id="repFunds">$0.00</p>
                     </div>
-                    <p id="repDate" class="col-span-3 text-center text-sm text-slate-500 font-bold mt-4"></p>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script>
-        const API = "http://127.0.0.1:8000/platform";
-        let token = localStorage.getItem('pm_token') || "";
-
-        if(token) toggleView(true);
-
-        function toggleView(isLogged) {
-            document.getElementById('loginView').classList.toggle('hidden', isLogged);
-            document.getElementById('dashboardView').classList.toggle('hidden', !isLogged);
-            if(isLogged) { showTab('categoriesTab'); loadCategories(); }
-        }
-
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
+        const API = 'http://localhost:8000/platform';
+        
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('pmToken')}`
+            };
         }
 
         async function login() {
             const res = await fetch(`${API}/login`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPass').value })
             });
-            if (res.ok) {
-                token = (await res.json()).access_token;
-                localStorage.setItem('pm_token', token);
-                toggleView(true);
-            } else alert("Login Failed!");
+            if(res.ok) {
+                const data = await res.json();
+                localStorage.setItem('pmToken', data.access_token);
+                document.getElementById('loginView').classList.add('hidden');
+                document.getElementById('dashboardView').classList.remove('hidden');
+                loadCategories();
+            } else alert("Login failed");
         }
 
-        function logout() { localStorage.removeItem('pm_token'); location.reload(); }
-        const getHeaders = () => ({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
+        function logout() { localStorage.removeItem('pmToken'); location.reload(); }
 
-        // Categories
         async function createCategory() {
-            const body = JSON.stringify({ name: document.getElementById('catName').value, description: document.getElementById('catDesc').value });
-            const res = await fetch(`${API}/categories`, { method: 'POST', headers: getHeaders(), body });
-            if(res.ok) { alert("Created!"); loadCategories(); } else alert("Failed");
+            const body = { name: document.getElementById('catName').value, description: "Auto-generated desc" };
+            await fetch(`${API}/categories`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
+            loadCategories();
         }
 
         async function loadCategories() {
             const q = document.getElementById('searchCat').value;
             const res = await fetch(`${API}/categories${q ? '?name='+q : ''}`, { headers: getHeaders() });
             const data = await res.json();
-            document.getElementById('categoriesList').innerHTML = data.map(c => `
-                <div class="bg-violet-50 p-4 rounded-xl border ${c.is_archived ? 'border-rose-200 opacity-60' : 'border-violet-100'}">
-                    <div class="flex justify-between items-start">
-                        <h4 class="font-bold text-violet-900">ID: ${c.category_id} | ${c.name}</h4>
-                        ${c.is_archived ? '<span class="text-xs font-bold text-rose-500">Archived</span>' : `<button onclick="suspendCat(${c.category_id})" class="text-xs font-bold text-rose-600 hover:underline">Suspend</button>`}
+            document.getElementById('catList').innerHTML = data.map(c => `
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div class="flex justify-between items-center">
+                        <strong class="text-slate-800">${c.name}</strong>
+                        ${c.is_suspended ? '<span class="text-xs text-slate-400 font-bold bg-slate-200 px-2 py-1 rounded">Suspended</span>' : `<button onclick="suspendCat(${c.category_id})" class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded hover:bg-rose-100">Suspend</button>`}
                     </div>
-                    <p class="text-sm text-slate-600 mt-2">${c.description}</p>
                 </div>
             `).join('');
         }
@@ -143,17 +118,15 @@
             loadCategories();
         }
 
-        // Reports
         async function fetchReport(type) {
             const res = await fetch(`${API}/reports/${type}`, { headers: getHeaders() });
             if(res.ok) {
                 const result = await res.json();
                 document.getElementById('reportCanvas').classList.remove('hidden');
-                document.getElementById('reportCanvas').classList.add('grid');
                 document.getElementById('repCamps').innerText = result.data.new_activities_launched;
                 document.getElementById('repTrans').innerText = result.data.transactions_count;
                 document.getElementById('repFunds').innerText = "$" + result.data.total_donations_amount.toFixed(2);
-                document.getElementById('repDate').innerText = `Period: ${new Date(result.data.period_start).toLocaleString()} to ${new Date(result.data.period_end).toLocaleString()}`;
+                document.getElementById('repDate').innerText = `Period: ${new Date(result.data.period_start).toLocaleDateString()} to ${new Date(result.data.period_end).toLocaleDateString()}`;
             } else alert("Failed to generate report");
         }
     </script>

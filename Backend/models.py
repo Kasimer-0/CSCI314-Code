@@ -1,12 +1,12 @@
-# models.py
+# models.py 最终终结版 - 修复 ImportError 和所有关联关系
+
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, timezone
 
 # ==========================================
-# 1. User Account Entity (Story #6 - #10)
-# Responsibilities: Only responsible for security, login credentials, and account ban status.
+# 1. User Account Entity
 # ==========================================
 class UserAccount(Base):
     __tablename__ = "user_accounts"
@@ -14,73 +14,70 @@ class UserAccount(Base):
     account_id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    status = Column(String, default="Pending") # Pending, Active, Suspended
+    status = Column(String, default="Pending")
     is_suspended = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     profile = relationship("UserProfile", back_populates="account", uselist=False, cascade="all, delete-orphan")
 
 # ==========================================
-# 2. User Profile Entity (Story #1 - #5)
-# Responsibilities: Only responsible for personal public information and role assignment
+# 2. User Profile Entity
 # ==========================================
 class UserProfile(Base):
     __tablename__ = "user_profiles"
 
     profile_id = Column(Integer, primary_key=True, index=True)
-    # Foreign key linking to the user_accounts table, ensuring each Account has only one Profile
-    account_id = Column(Integer, ForeignKey("user_accounts.account_id"), unique=True, nullable=False)
-    
-    username = Column(String, nullable=False)
+    account_id = Column(Integer, ForeignKey("user_accounts.account_id"))
+    username = Column(String)
     phone_number = Column(String, nullable=True)
-    role_id = Column(Integer, nullable=False) # 1: Donee, 2: Fundraiser, 3: Platform Manager, 0: User Admin
-    
-    account = relationship("UserAccount", back_populates="profile")
+    role_id = Column(Integer)
+    status = Column(String, default="Active")
+    is_suspended = Column(Boolean, default=False)
 
-    activities = relationship("Activity", back_populates="fundraiser_profile")
+    account = relationship("UserAccount", back_populates="profile")
+    bookmarks = relationship("Bookmark", back_populates="user_profile")
     donations = relationship("Donation", back_populates="donee_profile")
-    bookmarks = relationship("Bookmark", back_populates="donee_profile")
+    activities = relationship("Activity", back_populates="creator")
 
 # ==========================================
-# 3. Category Entity (Story #33 - #37)
+# 3. Category Entity (修复 ImportError 的关键)
 # ==========================================
 class Category(Base):
     __tablename__ = "categories"
 
     category_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
     description = Column(String, nullable=True)
-    is_archived = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    # 与 Activity 的关联
     activities = relationship("Activity", back_populates="category")
 
 # ==========================================
-# 4. Activity Entity (Story #13 - #23)
+# 4. Activity Entity
 # ==========================================
 class Activity(Base):
     __tablename__ = "activities"
 
     activity_id = Column(Integer, primary_key=True, index=True)
-    fundraiser_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False)
-    category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=False)
+    profile_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False)
+    # 修复：添加 category_id 外键
+    category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=True)
     
     title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
+    description = Column(String)
+    goal_amount = Column(Float, nullable=False)
     current_amount = Column(Float, default=0.0)
-    is_private = Column(Boolean, default=False)
-    status = Column(String, default="Ongoing")
-    view_count = Column(Integer, default=0)
+    status = Column(String, default="Pending")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    category = relationship("Category", back_populates="activities")
-    fundraiser_profile = relationship("UserProfile", back_populates="activities")
-    donations = relationship("Donation", back_populates="activity")
+    creator = relationship("UserProfile", back_populates="activities")
     bookmarks = relationship("Bookmark", back_populates="activity")
+    donations = relationship("Donation", back_populates="activity")
+    # 修复：与 Category 的握手
+    category = relationship("Category", back_populates="activities")
 
 # ==========================================
-# 5. Donation Entity (Story #31 - #32)
+# 5. Donation Entity
 # ==========================================
 class Donation(Base):
     __tablename__ = "donations"
@@ -88,7 +85,6 @@ class Donation(Base):
     donation_id = Column(Integer, primary_key=True, index=True)
     activity_id = Column(Integer, ForeignKey("activities.activity_id"), nullable=False)
     user_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False)
-    
     amount = Column(Float, nullable=False)
     message = Column(String, nullable=True)
     is_anonymous = Column(Boolean, default=False)
@@ -98,7 +94,7 @@ class Donation(Base):
     activity = relationship("Activity", back_populates="donations")
 
 # ==========================================
-# 6. Bookmark Entity (Story #26 - #28)
+# 6. Bookmark Entity
 # ==========================================
 class Bookmark(Base):
     __tablename__ = "bookmarks"
@@ -108,5 +104,5 @@ class Bookmark(Base):
     activity_id = Column(Integer, ForeignKey("activities.activity_id"), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    donee_profile = relationship("UserProfile", back_populates="bookmarks")
+    user_profile = relationship("UserProfile", back_populates="bookmarks")
     activity = relationship("Activity", back_populates="bookmarks")

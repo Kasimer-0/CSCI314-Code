@@ -18,6 +18,7 @@ class UserProfileCreate(BaseModel):
 class UserProfileUpdate(BaseModel):
     username: Optional[str] = None
     phone_number: Optional[str] = None
+    role_id: Optional[int] = None
 
 # ==========================================
 # 2. Entity Class (Business Logic & Database)
@@ -55,13 +56,21 @@ class UserProfileEntity:
 
     @staticmethod
     def get_profile(profile_id: int):
-        """Entity Logic (Story 2): View user profile"""
+        """Entity Logic (Story 2): Get single user profile safely"""
         db: Session = next(get_db())
         try:
             profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
             if not profile:
                 return None, "User profile not found."
-            return profile, None
+
+            return {
+                "profile_id": profile.profile_id,
+                "account_id": profile.account_id,
+                "username": profile.username,
+                "phone_number": profile.phone_number,
+                "role_id": profile.role_id,
+                "status": getattr(profile, 'status', 'Active')
+            }, None
         finally:
             db.close()
 
@@ -78,7 +87,27 @@ class UserProfileEntity:
                 profile.username = update_data.username
             if update_data.phone_number is not None:
                 profile.phone_number = update_data.phone_number
+            if update_data.role_id is not None:
+                profile.role_id = update_data.role_id
 
+            db.commit()
+            db.refresh(profile)
+            return profile, None
+        finally:
+            db.close()
+
+    @staticmethod
+    def suspend_profile(profile_id: int):
+        """Entity Logic (Story 4): Suspend user profile independently"""
+        db: Session = next(get_db())
+        try:
+            profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
+            if not profile:
+                return None, "User profile not found."
+
+            profile.status = "Suspended"
+            profile.is_suspended = True
+            
             db.commit()
             db.refresh(profile)
             return profile, None
@@ -93,6 +122,19 @@ class UserProfileEntity:
             query = db.query(UserProfile)
             if username_query:
                 query = query.filter(UserProfile.username.ilike(f"%{username_query}%"))
-            return query.all(), None
+            
+            profiles = query.all()
+            result = []
+            for p in profiles:
+                result.append({
+                    "profile_id": p.profile_id,
+                    "account_id": p.account_id,
+                    "username": p.username,
+                    "phone_number": p.phone_number,
+                    "role_id": p.role_id,
+                    "status": getattr(p, 'status', 'Active'),
+                    "is_suspended": getattr(p, 'is_suspended', False)
+                })
+            return result, None
         finally:
             db.close()

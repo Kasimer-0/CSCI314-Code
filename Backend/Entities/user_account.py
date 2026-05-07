@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 import bcrypt
 from models import UserAccount 
 from dependencies import get_db
+import jwt
+from datetime import timedelta
+from dependencies import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 # ==========================================
 # 1. Pydantic Models (Data Validation)
@@ -32,6 +35,27 @@ class UserAccountEntity:
             return bcrypt.checkpw(plain_password.encode('utf-8'), password_hash.encode('utf-8'))
         except:
             return False
+        
+    @staticmethod
+    def login_admin(login_data):
+        """Entity Logic (Story 11): Login admin and issue JWT"""
+        db: Session = next(get_db())
+        try:
+            account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()       
+            if not account or not UserAccountEntity.verify_password(login_data.password, account.password_hash):
+                return None, "Incorrect email or password."
+            if account.status == "Suspended" or account.is_suspended:
+                return None, "Your account has been suspended."
+            if not account.profile or account.profile.role_id != 0:
+                return None, "Access Denied. Admin privileges required."
+            
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            to_encode = {"sub": account.email, "exp": expire}
+            encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+            
+            return {"access_token": encoded_jwt, "token_type": "bearer"}, None
+        finally:
+            db.close()
 
     @staticmethod
     def create_account(account_data: UserAccountCreate):
@@ -61,16 +85,21 @@ class UserAccountEntity:
 
     @staticmethod
     def get_account(account_id: int):
-        """Entity Logic (Story 7): View user account"""
+        """Entity Logic (Story 7): Get single user account safely"""
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.account_id == account_id).first()
             if not account:
                 return None, "User account not found."
-            return account, None
+                          
+            return {
+                "account_id": account.account_id,
+                "email": account.email,
+                "status": account.status,
+                "is_suspended": account.is_suspended
+            }, None
         finally:
             db.close()
-
     @staticmethod
     def update_account(account_id: int, new_email: str):
         """Entity Logic (Story 8): Update user email"""

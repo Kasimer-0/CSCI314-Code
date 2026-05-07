@@ -52,8 +52,8 @@ class ToggleFavoriteController:
 
 class ManageFavoritesController:
     def execute(self, profile_id: int, title: Optional[str]):
-        """Story 27 & 28: Search and View favourite list"""
-        favorites, error = DoneeEntity.get_favorites(profile_id, title)
+        """Story 27: View/Search favorites"""
+        favorites, error = DoneeEntity.manage_favorites(profile_id, title)
         if error:
             raise HTTPException(status_code=500, detail=error)
         return favorites
@@ -67,13 +67,12 @@ class DonateToActivityController:
         return result
 
 class SearchPastDonationsController:
-    def execute(self, profile_id: int):
-        """Story 31: Search for my past donations"""
-        donations, error = DoneeEntity.search_past_donations(profile_id)
+    def execute(self, profile_id: int, title: Optional[str]):
+        """Story 31: Search my past donations"""
+        donations, error = DoneeEntity.search_past_donations(profile_id, title)
         if error:
             raise HTTPException(status_code=500, detail=error)
         return donations
-
 class ViewPastDonationController:
     def execute(self, donation_id: int, profile_id: int):
         """Story 32: View my past donation"""
@@ -81,6 +80,14 @@ class ViewPastDonationController:
         if error:
             raise HTTPException(status_code=404, detail=error)
         return donation_detail
+
+class ViewDonationDetailController:
+    def execute(self, donation_id: int, profile_id: int):
+        """Story 32: Logic for viewing one donation"""
+        donation, error = DoneeEntity.view_past_donation_detail(donation_id, profile_id)
+        if error:
+            raise HTTPException(status_code=404, detail=error)
+        return donation
 
 
 # ============================================================
@@ -116,9 +123,13 @@ def route_donate_to_activity(activity_id: int, donation_data: DonationRequest, d
     return DonateToActivityController().execute(activity_id, donee_user.profile.profile_id, donation_data)
 
 @router.get("/donations")
-def route_search_past_donations(donee_user = Depends(get_donee)):
-    return SearchPastDonationsController().execute(donee_user.profile.profile_id)
+def route_search_past_donations(title: Optional[str] = Query(None), donee_user = Depends(get_donee)):
+    return SearchPastDonationsController().execute(donee_user.profile.profile_id, title)
 
 @router.get("/donations/{donation_id}")
 def route_view_past_donation(donation_id: int, donee_user = Depends(get_donee)):
     return ViewPastDonationController().execute(donation_id, donee_user.profile.profile_id)
+
+@router.get("/donations/{donation_id}")
+def route_view_donation_detail(donation_id: int, donee_user = Depends(get_donee)):
+    return ViewDonationDetailController().execute(donation_id, donee_user.profile.profile_id)

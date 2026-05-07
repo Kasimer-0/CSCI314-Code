@@ -125,6 +125,37 @@ class DoneeEntity:
             db.close()
 
     @staticmethod
+    def manage_favorites(profile_id: int, title: Optional[str] = None):
+        """Entity Logic (Story 27 & 28): Get detailed bookmark data for card rendering"""
+        db: Session = next(get_db())
+        try:
+            query = db.query(Bookmark).filter(Bookmark.user_id == profile_id)
+            bookmarks = query.all()
+            
+            result = []
+            for b in bookmarks:
+                if not b.activity:
+                    continue
+                act = b.activity
+                activity_title = act.title
+                
+                if title and title.lower() not in activity_title.lower():
+                    continue
+                    
+                result.append({
+                    "bookmark_id": b.bookmark_id,
+                    "activity_id": b.activity_id,
+                    "activity_title": activity_title,
+                    "description": act.description,
+                    "target_amount": act.target_amount,
+                    "current_amount": act.current_amount,
+                    "status": act.status
+                })
+            return result, None
+        finally:
+            db.close()
+
+    @staticmethod
     def make_donation(activity_id: int, profile_id: int, donation_data: DonationRequest):
         """Helper Entity Logic for Donations"""
         db: Session = next(get_db())
@@ -155,23 +186,49 @@ class DoneeEntity:
             db.close()
 
     @staticmethod
-    def search_past_donations(profile_id: int):
-        """Entity Logic (Story 31)"""
+    def search_past_donations(profile_id: int, title: Optional[str] = None):
+        """Entity Logic (Story 31): Search donations safely"""
         db: Session = next(get_db())
         try:
             donations = db.query(Donation).filter(Donation.user_id == profile_id).order_by(Donation.created_at.desc()).all()
-            return donations, None
+            result = []
+            for d in donations:
+                activity_title = d.activity.title if d.activity else "Unknown Activity"
+                
+                if title and title.lower() not in activity_title.lower():
+                    continue
+                    
+                result.append({
+                    "donation_id": d.donation_id,
+                    "amount": d.amount,
+                    "created_at": d.created_at.isoformat(),
+                    "activity_title": activity_title
+                })
+            return result, None
         finally:
             db.close()
 
     @staticmethod
     def view_past_donation_detail(donation_id: int, profile_id: int):
-        """Entity Logic (Story 32)"""
+        """Entity Logic (Story 32): Get safe dictionary for specific donation"""
         db: Session = next(get_db())
         try:
-            donation = db.query(Donation).filter(Donation.donation_id == donation_id, Donation.user_id == profile_id).first()
+            donation = db.query(Donation).filter(
+                Donation.donation_id == donation_id, 
+                Donation.user_id == profile_id
+            ).first()
+            
             if not donation:
                 return None, "Donation record not found."
-            return donation, None
+            
+            # 在 db.close() 之前手动组装所有字段
+            return {
+                "donation_id": donation.donation_id,
+                "amount": donation.amount,
+                "message": donation.message or "No message left.",
+                "is_anonymous": donation.is_anonymous,
+                "created_at": donation.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "activity_title": donation.activity.title if donation.activity else "Unknown Activity"
+            }, None
         finally:
             db.close()

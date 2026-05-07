@@ -52,10 +52,10 @@ class UpdateUserProfileController:
 class SuspendUserProfileController:
     def execute(self, user_id: int):
         """Story 4: Suspend user profile"""
-        result, error = UserProfileEntity.suspend_profile(user_id)
+        profile, error = UserProfileEntity.suspend_profile(user_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
-        return result
+        return {"message": "Profile suspended successfully"}
 
 class SearchUserProfileController:
     def execute(self, username: Optional[str]):
@@ -112,6 +112,17 @@ class SearchUserAccountController:
             raise HTTPException(status_code=500, detail=error)
         return accounts
 
+# =======================================
+# --- Admin Authentication (Story 11) ---
+# =======================================
+class AdminLoginController:
+    def execute(self, login_data: AdminLoginRequest):
+        token_response, error = UserAccountEntity.login_admin(login_data)
+        if error:
+            status_code = 401 if "Incorrect" in error else 403
+            raise HTTPException(status_code=status_code, detail=error)
+        return token_response
+
 
 # ============================================================
 # Instantiate these classes and call
@@ -139,6 +150,10 @@ def route_search_profiles(username: Optional[str] = Query(None), admin=Depends(g
     return SearchUserProfileController().execute(username)
 
 # --- Accounts ---
+@router.post("/login")
+def route_admin_login(login_data: AdminLoginRequest):
+    return AdminLoginController().execute(login_data)
+
 @router.post("/accounts")
 def route_create_account(data: UserAccountCreate, admin=Depends(get_user_admin)):
     return CreateUserAccountController().execute(data)
