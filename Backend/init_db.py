@@ -1,4 +1,3 @@
-# init_db.py
 from database import engine, Base
 import models
 

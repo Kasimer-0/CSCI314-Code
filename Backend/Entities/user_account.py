@@ -1,5 +1,3 @@
-# Entities/user_account.py
-
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
@@ -56,6 +54,23 @@ class UserAccountEntity:
             return {"access_token": encoded_jwt, "token_type": "bearer"}, None
         finally:
             db.close()
+
+    @staticmethod
+    def logout_admin():
+        """Entity Logic (Story 12): User administrator logout logic"""
+        # In the stateless JWT architecture, the backend cannot actually unilaterally revoke an issued token.
+        # The main action of logging out is for the front end to delete the token from the browser cache.
+        
+        # Extension tip: If we need to implement a more secure "forced logout" feature in the future,
+        # we can create a Blacklist database table and execute the following logic here:
+
+        # This logic can be expanded according to future needs, for example:
+        # print("Admin logged out at:", datetime.now())
+        # At this stage, we only need to return a format that matches the Controller's expectations.
+        # db: Session = next(get_db())
+        # db.add(BlacklistedToken(token=current_token))
+        # db.commit()
+        return {"message": "Logged out successfully from User Admin session."}, None
 
     @staticmethod
     def create_account(account_data: UserAccountCreate):
@@ -154,3 +169,59 @@ class UserAccountEntity:
             return account
         finally:
             db.close()
+
+    @staticmethod
+    def login_fundraiser(login_data):
+        """Entity Logic (Story 18): Fundraiser Login"""
+        db: Session = next(get_db())
+        try:
+            account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()
+            if not account or not UserAccountEntity.verify_password(login_data.password, account.password_hash):
+                return None, "Incorrect email or password."
+
+            # Strict verification: Ensure only Fundraiser (role_id = 2) can log in.
+            if not account.profile or account.profile.role_id != 2:
+                return None, "Access denied. Only Fundraisers can log in here."
+
+            if account.status == "Suspended" or account.is_suspended:
+                return None, "This account has been suspended."
+
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            token = jwt.encode({"sub": account.email, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+
+            return {"access_token": token, "token_type": "bearer"}, None
+        finally:
+            db.close()
+
+    @staticmethod
+    def logout_fundraiser():
+        """Entity Logic (Story 19): Fundraiser Logout"""
+        return {"message": "Successfully logged out. Please discard your token."}, None
+
+    @staticmethod
+    def login_donee(login_data):
+        """Entity Logic (Story 29): Donee Login"""
+        db: Session = next(get_db())
+        try:
+            account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()
+            if not account or not UserAccountEntity.verify_password(login_data.password, account.password_hash):
+                return None, "Incorrect email or password."
+
+            # Strict verification: Ensure only Donee (role_id = 1) can log in.
+            if not account.profile or account.profile.role_id != 1:
+                return None, "Access denied. Only Donees can log in here."
+
+            if account.status == "Suspended" or account.is_suspended:
+                return None, "This account has been suspended."
+
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            token = jwt.encode({"sub": account.email, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+
+            return {"access_token": token, "token_type": "bearer"}, None
+        finally:
+            db.close()
+
+    @staticmethod
+    def logout_donee():
+        """Entity Logic (Story 30): Donee Logout"""
+        return {"message": "Successfully logged out. Please discard your token."}, None

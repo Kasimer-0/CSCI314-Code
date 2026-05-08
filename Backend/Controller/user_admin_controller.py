@@ -1,5 +1,3 @@
-# Controller/user_admin_controller.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from pydantic import BaseModel, EmailStr
@@ -113,63 +111,89 @@ class SearchUserAccountController:
         return accounts
 
 # =======================================
-# --- Admin Authentication (Story 11) ---
+# --- Admin Authentication (Story 11 - 12) ---
 # =======================================
 class AdminLoginController:
     def execute(self, login_data: AdminLoginRequest):
+        """Story 11: Login to my user admin account"""
         token_response, error = UserAccountEntity.login_admin(login_data)
         if error:
             status_code = 401 if "Incorrect" in error else 403
             raise HTTPException(status_code=status_code, detail=error)
         return token_response
+    
+class LogoutUserAdminController:
+    def execute(self):
+        """Story 12: Logout of my user admin account"""
+        # Call Entity Logic
+        result, error = UserAccountEntity.logout_admin()
+        if error:
+            raise HTTPException(status_code=400, detail=error)
+        return result
 
 
 # ============================================================
-# Instantiate these classes and call
+# Route Binding: Instantiate Classes and Execute
 # ============================================================
 
 # --- Profiles ---
 @router.post("/profiles")
 def route_create_profile(data: UserProfileCreate, admin=Depends(get_user_admin)):
+    """API for Story 1"""
     return CreateUserProfileController().execute(data)
 
 @router.get("/profiles/{user_id}")
 def route_view_profile(user_id: int, admin=Depends(get_user_admin)):
+    """API for Story 2"""
     return ViewUserProfileController().execute(user_id)
 
 @router.patch("/profiles/{user_id}")
 def route_update_profile(user_id: int, data: UserProfileUpdate, admin=Depends(get_user_admin)):
+    """API for Story 3"""
     return UpdateUserProfileController().execute(user_id, data)
 
 @router.post("/profiles/{user_id}/suspend")
 def route_suspend_profile(user_id: int, admin=Depends(get_user_admin)):
+    """API for Story 4"""
     return SuspendUserProfileController().execute(user_id)
 
 @router.get("/profiles")
 def route_search_profiles(username: Optional[str] = Query(None), admin=Depends(get_user_admin)):
+    """API for Story 5"""
     return SearchUserProfileController().execute(username)
 
 # --- Accounts ---
 @router.post("/login")
 def route_admin_login(login_data: AdminLoginRequest):
+    """API for Story 11"""
     return AdminLoginController().execute(login_data)
+
+@router.post("/logout")
+def route_admin_logout(admin=Depends(get_user_admin)):
+    """API for Story 12"""
+    return LogoutUserAdminController().execute()
 
 @router.post("/accounts")
 def route_create_account(data: UserAccountCreate, admin=Depends(get_user_admin)):
+    """API for Story 6"""
     return CreateUserAccountController().execute(data)
 
 @router.get("/accounts/{user_id}")
 def route_view_account(user_id: int, admin=Depends(get_user_admin)):
+    """API for Story 7"""
     return ViewUserAccountController().execute(user_id)
 
 @router.patch("/accounts/{user_id}")
 def route_update_account(user_id: int, email: str = Query(...), admin=Depends(get_user_admin)):
+    """API for Story 8"""
     return UpdateUserAccountController().execute(user_id, email)
 
 @router.post("/accounts/{user_id}/suspend")
 def route_suspend_account(user_id: int, admin=Depends(get_user_admin)):
+    """API for Story 9"""
     return SuspendUserAccountController().execute(user_id)
 
 @router.get("/accounts")
 def route_search_accounts(email: Optional[str] = Query(None), admin=Depends(get_user_admin)):
+    """API for Story 10"""
     return SearchUserAccountController().execute(email)

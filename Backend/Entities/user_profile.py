@@ -1,5 +1,3 @@
-# Entities/user_profile.py
-
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session

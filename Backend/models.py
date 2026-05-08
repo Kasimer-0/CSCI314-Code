@@ -1,5 +1,3 @@
-# models.py 最终终结版 - 修复 ImportError 和所有关联关系
-
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
@@ -40,7 +38,7 @@ class UserProfile(Base):
     activities = relationship("Activity", back_populates="creator")
 
 # ==========================================
-# 3. Category Entity (修复 ImportError 的关键)
+# 3. Category Entity
 # ==========================================
 class Category(Base):
     __tablename__ = "categories"
@@ -60,7 +58,6 @@ class Activity(Base):
 
     activity_id = Column(Integer, primary_key=True, index=True)
     profile_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False)
-    # 修复：添加 category_id 外键
     category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=True)
     
     title = Column(String, nullable=False)
@@ -73,7 +70,6 @@ class Activity(Base):
     creator = relationship("UserProfile", back_populates="activities")
     bookmarks = relationship("Bookmark", back_populates="activity")
     donations = relationship("Donation", back_populates="activity")
-    # 修复：与 Category 的握手
     category = relationship("Category", back_populates="activities")
 
 # ==========================================

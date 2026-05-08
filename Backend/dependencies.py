@@ -47,7 +47,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 # ================= Role-Based Access Control =================
 def get_user_admin(current_user: UserAccount = Depends(get_current_user)):
-    if not current_user.profile or current_user.profile.role_id != 0: 
+    # Add explicit check for the existence of the profile
+    if not current_user.profile:
+        raise HTTPException(status_code=403, detail="User profile not found")
+    if current_user.profile.role_id != 0: 
         raise HTTPException(status_code=403, detail="User Admin access required")
     return current_user
 
