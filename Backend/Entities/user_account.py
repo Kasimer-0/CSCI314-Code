@@ -225,3 +225,38 @@ class UserAccountEntity:
     def logout_donee():
         """Entity Logic (Story 30): Donee Logout"""
         return {"message": "Successfully logged out. Please discard your token."}, None
+    
+    @staticmethod
+    def login_manager(login_data):
+        """Entity Logic (Story 38): Platform Manager Login"""
+        db: Session = next(get_db())
+        try:
+            # 1. Search Account
+            account = db.query(UserAccount).filter(UserAccount.email == login_data.get("email")).first()
+
+            # 2. Verify Credentials
+            if not account or not UserAccountEntity.verify_password(login_data.get("password"), account.password_hash):
+                return None, "Incorrect email or password."
+
+            # 3. Role Verification: Platform Manager's role_id must be 3
+            if not account.profile or account.profile.role_id != 3:
+                return None, "Access denied. Platform Manager privileges required."
+
+            # 4. Status Check
+            if account.status == "Suspended" or account.is_suspended:
+                return None, "Your account has been suspended."
+
+            # 5. Generate JWT Token
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            to_encode = {"sub": account.email, "exp": expire}
+            token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+            return {"access_token": token, "token_type": "bearer"}, None
+        finally:
+            db.close()
+
+    @staticmethod
+    def logout_manager():
+        """Entity Logic (Story 39): Platform Manager Logout"""
+        # Follow the JWT stateless logic, return success message for Controller processing
+        return {"message": "Successfully logged out from Platform Manager session."}, None

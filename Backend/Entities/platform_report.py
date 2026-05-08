@@ -7,7 +7,11 @@ from dependencies import get_db
 class PlatformReportEntity:
     @staticmethod
     def generate_stats(start_date: datetime, end_date: datetime):
-        """Entity Logic (Story 40, 41, 42)"""
+        """[Story 40, 41, 42] Core statistical logic: Generate platform operation data reports.
+            This method is responsible for aggregating data across tables and calculating the following within a specified time range:
+            1. Number of newly initiated fundraising campaigns (Activity table)
+            2. Total donation amount (Donation table)
+            3. Number of successful transactions (Donation table)"""
         db: Session = next(get_db())
         try:
             new_activities = db.query(func.count(Activity.activity_id)).filter(

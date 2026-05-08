@@ -15,7 +15,7 @@ class CategoryUpdate(BaseModel):
 class CategoryEntity:
     @staticmethod
     def create_category(cat_data: CategoryCreate):
-        """Entity Logic (Story 33)"""
+        """Business Logic: Create a fundraising campaign category. (Story 33)"""
         db: Session = next(get_db())
         try:
             new_cat = Category(name=cat_data.name, description=cat_data.description)
@@ -28,7 +28,7 @@ class CategoryEntity:
 
     @staticmethod
     def get_category(category_id: int):
-        """Entity Logic (Story 34)"""
+        """Business Logic: Retrieve a fundraising campaign category by ID. (Story 34)"""
         db: Session = next(get_db())
         try:
             category = db.query(Category).filter(Category.category_id == category_id).first()
@@ -38,7 +38,7 @@ class CategoryEntity:
 
     @staticmethod
     def update_category(category_id: int, cat_data: CategoryUpdate):
-        """Entity Logic (Story 35)"""
+        """Business Logic: Update a fundraising campaign category. (Story 35)"""
         db: Session = next(get_db())
         try:
             category = db.query(Category).filter(Category.category_id == category_id).first()
@@ -53,7 +53,7 @@ class CategoryEntity:
 
     @staticmethod
     def suspend_category(category_id: int):
-        """Entity Logic (Story 36)"""
+        """Business Logic: Suspend a fundraising campaign category. (Story 36)"""
         db: Session = next(get_db())
         try:
             category = db.query(Category).filter(Category.category_id == category_id).first()
@@ -66,7 +66,7 @@ class CategoryEntity:
 
     @staticmethod
     def search_categories(name_query: Optional[str]):
-        """Entity Logic (Story 37)"""
+        """Business Logic: Search for fundraising campaign categories. (Story 37)"""
         db: Session = next(get_db())
         try:
             query = db.query(Category)
