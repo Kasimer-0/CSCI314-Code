@@ -12,89 +12,73 @@
 </head>
 <body class="text-slate-800 flex h-screen overflow-hidden">
 
-    <div id="loginView" class="fixed inset-0 bg-amber-50 flex items-center justify-center z-50">
-        <div class="bg-white p-10 rounded-[2rem] shadow-2xl border border-amber-100 w-[420px]">
-            <div class="text-center mb-10">
-                <div class="bg-gradient-to-br from-amber-400 to-amber-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg shadow-amber-200">✨</div>
-                <h2 class="text-3xl font-extrabold text-slate-900">Fundraiser</h2>
-                <p class="text-sm text-slate-500 mt-2">Log in to launch your campaign</p>
-            </div>
-            <input type="email" id="loginEmail" placeholder="Fundraiser Email" class="w-full mb-4 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all text-sm font-medium">
-            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-8 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all text-sm font-medium">
-            <button onclick="login()" class="w-full bg-amber-500 text-white font-bold py-4 rounded-2xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 transform hover:-translate-y-0.5">Enter Workspace</button>
+    <div id="sidebar" class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl z-20 relative">
+        <div class="p-8">
+            <h1 class="text-2xl font-extrabold text-white flex items-center gap-2 mb-10 tracking-tight">
+                <span class="text-amber-500">✨ Impact</span>Maker
+            </h1>
+            <nav class="flex flex-col gap-3">
+                <button onclick="switchTab('ongoing')" id="nav-ongoing" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-amber-400 font-bold transition-all">🚀 Ongoing Campaigns</button>
+                <button onclick="switchTab('history')" id="nav-history" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all">📚 Past History</button>
+                <button onclick="switchTab('create')" id="nav-create" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all flex items-center justify-between">
+                    Launch New <span class="bg-amber-500 text-white text-xs px-2 py-1 rounded-md">+</span>
+                </button>
+            </nav>
+        </div>
+        <div class="p-6 border-t border-slate-800">
+            <button onclick="logout()" class="w-full text-left px-4 py-3 text-rose-400 font-bold hover:bg-slate-800 rounded-xl transition-colors">🚪 Logout</button>
         </div>
     </div>
 
-    <div id="dashboardView" class="hidden w-full h-full flex">
+    <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto relative">
         
-        <div class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl z-20 relative">
-            <div class="p-8">
-                <h1 class="text-2xl font-extrabold text-white flex items-center gap-2 mb-10 tracking-tight">
-                    <span class="text-amber-500">✨ Impact</span>Maker
-                </h1>
-                <nav class="flex flex-col gap-3">
-                    <button onclick="switchTab('ongoing')" id="nav-ongoing" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-amber-400 font-bold transition-all">🚀 Ongoing Campaigns</button>
-                    <button onclick="switchTab('history')" id="nav-history" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all">📚 Past History</button>
-                    <button onclick="switchTab('create')" id="nav-create" class="text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all flex items-center justify-between">
-                        Launch New <span class="bg-amber-500 text-white text-xs px-2 py-1 rounded-md">+</span>
-                    </button>
-                </nav>
+        <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
+            <div>
+                <h2 id="pageTitle" class="text-3xl font-extrabold text-slate-900 tracking-tight">Workspace</h2>
+                <p id="pageSubtitle" class="text-sm text-slate-500 font-medium mt-1">Manage your fundraising activities</p>
             </div>
-            <div class="p-6 border-t border-slate-800">
-                <button onclick="logout()" class="w-full text-left px-4 py-3 text-rose-400 font-bold hover:bg-slate-800 rounded-xl transition-colors">🚪 Logout</button>
+            <div id="searchContainer" class="flex gap-2 w-96">
+                <input type="text" id="searchInput" placeholder="Search by title..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                <button onclick="executeSearch()" class="bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 text-sm">Search</button>
             </div>
-        </div>
+        </header>
 
-        <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto relative">
+        <div class="p-10">
             
-            <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
-                <div>
-                    <h2 id="pageTitle" class="text-3xl font-extrabold text-slate-900 tracking-tight">Workspace</h2>
-                    <p id="pageSubtitle" class="text-sm text-slate-500 font-medium mt-1">Manage your fundraising activities</p>
+            <div id="section-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 </div>
-                <div id="searchContainer" class="flex gap-2 w-96">
-                    <input type="text" id="searchInput" placeholder="Search by title..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
-                    <button onclick="executeSearch()" class="bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 text-sm">Search</button>
-                </div>
-            </header>
 
-            <div class="p-10">
-                
-                <div id="section-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    </div>
-
-                <div id="section-create" class="hidden max-w-3xl">
-                    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div class="col-span-2">
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Campaign Title</label>
-                                <input type="text" id="createTitle" placeholder="e.g., Save the Ocean 2026" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all font-bold text-lg">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Detailed Description</label>
-                                <textarea id="createDesc" rows="4" placeholder="Explain your cause..." class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Category ID</label>
-                                <input type="number" id="createCategory" placeholder="e.g., 1 (Health), 2 (Edu)" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target Amount ($)</label>
-                                <input type="number" id="createTarget" placeholder="e.g., 5000" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold text-emerald-600">
-                            </div>
+            <div id="section-create" class="hidden max-w-3xl">
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Campaign Title</label>
+                            <input type="text" id="createTitle" placeholder="e.g., Save the Ocean 2026" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all font-bold text-lg">
                         </div>
-                        <div class="flex items-center gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            <input type="checkbox" id="createPrivate" class="w-5 h-5 text-amber-500 rounded focus:ring-amber-500">
-                            <div>
-                                <span class="text-sm font-bold text-slate-800 block">Make this campaign private</span>
-                                <span class="text-xs text-slate-500">Only visible via direct links.</span>
-                            </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Detailed Description</label>
+                            <textarea id="createDesc" rows="4" placeholder="Explain your cause..." class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm"></textarea>
                         </div>
-                        <button onclick="createActivity()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-transform active:scale-[0.98] shadow-lg">🚀 Publish Campaign</button>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Category ID</label>
+                            <input type="number" id="createCategory" placeholder="e.g., 1 (Health)" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Target Amount ($)</label>
+                            <input type="number" id="createTarget" placeholder="e.g., 5000" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-all text-sm font-bold text-emerald-600">
+                        </div>
                     </div>
+                    <div class="flex items-center gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <input type="checkbox" id="createPrivate" class="w-5 h-5 text-amber-500 rounded focus:ring-amber-500">
+                        <div>
+                            <span class="text-sm font-bold text-slate-800 block">Make this campaign private</span>
+                            <span class="text-xs text-slate-500">Only visible via direct links.</span>
+                        </div>
+                    </div>
+                    <button onclick="createActivity()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-transform active:scale-[0.98] shadow-lg">🚀 Publish Campaign</button>
                 </div>
-
             </div>
+
         </div>
     </div>
 
@@ -125,47 +109,30 @@
     </div>
 
     <script>
-        const API = 'http://127.0.0.1:8000';
+        const API = 'http://127.0.0.1:8000/fundraiser';
         let token = localStorage.getItem('fundToken') || null;
         let currentTab = 'ongoing'; 
 
-        if(token) showDashboard();
+        // Security check: If no token is provided, force redirection to the login portal.
+        if (!token) {
+            window.location.href = 'index.html';
+        } else {
+            showDashboard();
+        }
 
         function getHeaders() {
             return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
         }
 
-        // --- AUTH (Story 18, 19) ---
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPass').value;
-            try {
-                const res = await fetch(`${API}/fundraiser/login`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    token = data.access_token;
-                    localStorage.setItem('fundToken', token);
-                    showDashboard();
-                } else alert(data.detail || "Login failed");
-            } catch (err) { alert("Server error."); }
-        }
-
         async function logout() {
             if(confirm("Log out of your Fundraiser account?")) {
-                await fetch(`${API}/fundraiser/logout`, { method: 'POST', headers: getHeaders() });
+                await fetch(`${API}/logout`, { method: 'POST', headers: getHeaders() });
                 localStorage.removeItem('fundToken');
-                token = null;
-                document.getElementById('loginView').style.display = 'flex';
-                document.getElementById('dashboardView').style.display = 'none';
+                window.location.href = 'index.html';
             }
         }
 
         function showDashboard() {
-            document.getElementById('loginView').style.display = 'none';
-            document.getElementById('dashboardView').style.display = 'flex';
             switchTab('ongoing');
         }
 
@@ -180,7 +147,6 @@
             document.getElementById('nav-ongoing').className = tab === 'ongoing' ? activeClass : inactiveClass;
             document.getElementById('nav-history').className = tab === 'history' ? activeClass : inactiveClass;
             
-            // "Create" button has a span inside, handle carefully
             document.getElementById('nav-create').className = tab === 'create' ? 
                 "text-left px-4 py-3 rounded-xl bg-amber-500 text-white font-bold transition-all flex items-center justify-between" : 
                 "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all flex items-center justify-between";
@@ -192,12 +158,12 @@
             if(tab === 'ongoing') { 
                 document.getElementById('pageTitle').innerText = "🚀 Ongoing Campaigns"; 
                 document.getElementById('pageSubtitle').innerText = "Manage and track your active fundraising goals.";
-                loadActivities(`${API}/fundraiser/activities`, true); 
+                loadActivities(`${API}/activities`, true); 
             }
             if(tab === 'history') { 
                 document.getElementById('pageTitle').innerText = "📚 Past History"; 
                 document.getElementById('pageSubtitle').innerText = "Review closed or suspended campaigns.";
-                loadActivities(`${API}/fundraiser/history`, false); 
+                loadActivities(`${API}/history`, false); 
             }
             if(tab === 'create') { 
                 document.getElementById('pageTitle').innerText = "Launch New Campaign"; 
@@ -208,13 +174,13 @@
         function executeSearch() {
             const query = document.getElementById('searchInput').value;
             const route = currentTab === 'ongoing' ? 'activities' : 'history';
-            loadActivities(`${API}/fundraiser/${route}${query ? '?title='+query : ''}`, currentTab === 'ongoing');
+            loadActivities(`${API}/${route}${query ? '?title='+query : ''}`, currentTab === 'ongoing');
         }
 
-        // --- ACTIVITIES LISTING (Story 14, 17, 22, 23) ---
+        // --- ACTIVITIES LISTING ---
         async function loadActivities(url, isOngoing) {
             const res = await fetch(url, { headers: getHeaders() });
-            if(res.status === 401 || res.status === 403) return logout();
+            if(res.status === 401 || res.status === 403) window.location.href = 'index.html';
             const activities = await res.json();
             
             document.getElementById('section-list').innerHTML = activities.map(a => {
@@ -227,7 +193,6 @@
                     </div>
                     <h3 class="font-bold text-xl text-slate-900 mb-2 truncate">${a.title}</h3>
                     <p class="text-sm text-slate-500 line-clamp-2 mb-6">${a.description}</p>
-                    
                     <div class="mb-6">
                         <div class="flex justify-between text-xs font-bold text-slate-800 mb-2">
                             <span>$${a.current_amount.toFixed(2)} raised</span>
@@ -237,7 +202,6 @@
                             <div class="${isOngoing ? 'bg-amber-500' : 'bg-slate-400'} h-2 rounded-full" style="width: ${progress}%"></div>
                         </div>
                     </div>
-
                     ${isOngoing ? `
                     <div class="flex gap-2 border-t border-slate-100 pt-4">
                         <button onclick="updateTitle(${a.activity_id}, '${a.title}')" class="flex-1 text-sm font-bold text-slate-700 bg-slate-100 py-2 rounded-xl hover:bg-slate-200 transition-colors">Edit Title</button>
@@ -248,7 +212,7 @@
                     </div>
                     `}
                 </div>
-            `}).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No records found.</div>`;
+            `}).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No campaigns found.</div>`;
         }
 
         // --- CREATE ACTIVITY (Story 13) ---
@@ -259,46 +223,42 @@
             const target_amount = parseFloat(document.getElementById('createTarget').value);
             const is_private = document.getElementById('createPrivate').checked;
 
-            if(!title || !description || !category_id || !target_amount) return alert("Please fill all required fields correctly.");
+            if(!title || !description || !category_id || !target_amount) return alert("Fill all required fields.");
 
-            const res = await fetch(`${API}/fundraiser/activities`, {
+            const res = await fetch(`${API}/activities`, {
                 method: 'POST', headers: getHeaders(),
                 body: JSON.stringify({ title, description, category_id, target_amount, is_private })
             });
 
-            const data = await res.json();
             if(res.ok) {
-                alert("🎉 Campaign Published Successfully!");
-                document.getElementById('createTitle').value = '';
-                document.getElementById('createDesc').value = '';
-                document.getElementById('createTarget').value = '';
-                switchTab('ongoing'); // Redirect to dashboard
-            } else alert(data.detail);
+                alert("🎉 Campaign Published!");
+                switchTab('ongoing');
+            } else {
+                const data = await res.json();
+                alert(data.detail);
+            }
         }
 
-        // --- UPDATE & SUSPEND (Story 15, 16) ---
         async function updateTitle(id, currentTitle) {
             const newTitle = prompt("Update Campaign Title:", currentTitle);
             if(!newTitle || newTitle === currentTitle) return;
-            const res = await fetch(`${API}/fundraiser/activities/${id}?title=${encodeURIComponent(newTitle)}`, { 
+            await fetch(`${API}/activities/${id}?title=${encodeURIComponent(newTitle)}`, { 
                 method: 'PATCH', headers: getHeaders() 
             });
-            if(res.ok) executeSearch();
-            else alert("Failed to update.");
-        }
-
-        async function suspendActivity(id) {
-            if(!confirm("Are you sure you want to suspend this campaign? It will be moved to History.")) return;
-            await fetch(`${API}/fundraiser/activities/${id}/suspend`, { method: 'POST', headers: getHeaders() });
             executeSearch();
         }
 
-        // --- STATS & HISTORY VIEW (Story 20, 23) ---
+        async function suspendActivity(id) {
+            if(confirm("Suspend this campaign?")) {
+                await fetch(`${API}/activities/${id}/suspend`, { method: 'POST', headers: getHeaders() });
+                executeSearch();
+            }
+        }
+
+        // --- STATS (Story 20) ---
         async function viewStats(id) {
-            const res = await fetch(`${API}/fundraiser/activities/${id}/stats`, { headers: getHeaders() });
-            if(!res.ok) return alert("Failed to load stats.");
+            const res = await fetch(`${API}/activities/${id}/stats`, { headers: getHeaders() });
             const data = await res.json();
-            
             document.getElementById('statTitle').innerText = data.title;
             document.getElementById('statViews').innerText = data.views;
             document.getElementById('statShortlist').innerText = data.shortlisted_times;
@@ -310,9 +270,9 @@
         }
 
         async function viewPastDetail(id) {
-            const res = await fetch(`${API}/fundraiser/history/${id}`, { headers: getHeaders() });
+            const res = await fetch(`${API}/history/${id}`, { headers: getHeaders() });
             const data = await res.json();
-            alert(`ARCHIVE DETAIL\n\nTitle: ${data.title}\nFinal Amount: $${data.current_amount}\nGoal: $${data.target_amount}\nStatus: ${data.status}\nDesc: ${data.description}`);
+            alert(`ARCHIVE DETAIL\n\nTitle: ${data.title}\nFinal Amount: $${data.current_amount}\nGoal: $${data.target_amount}\nStatus: ${data.status}`);
         }
     </script>
 </body>

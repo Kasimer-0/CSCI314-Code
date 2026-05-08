@@ -13,20 +13,7 @@
 </head>
 <body class="text-slate-800 flex h-screen overflow-hidden">
 
-    <div id="loginView" class="fixed inset-0 bg-emerald-50 flex items-center justify-center z-50">
-        <div class="bg-white p-10 rounded-[2rem] shadow-2xl border border-emerald-100 w-[420px]">
-            <div class="text-center mb-10">
-                <div class="bg-emerald-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg shadow-emerald-200">💚</div>
-                <h2 class="text-3xl font-extrabold text-slate-900">Welcome Back</h2>
-                <p class="text-sm text-slate-500 mt-2">Log in to continue making an impact</p>
-            </div>
-            <input type="email" id="loginEmail" placeholder="Donee Email" class="w-full mb-4 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-sm font-medium">
-            <input type="password" id="loginPass" placeholder="Password" value="password123" class="w-full mb-8 px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-sm font-medium">
-            <button onclick="login()" class="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 transform hover:-translate-y-0.5">Sign In</button>
-        </div>
-    </div>
-
-    <div id="dashboardView" class="hidden w-full h-full flex">
+    <div id="dashboardView" class="w-full h-full flex">
         
         <div class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-10">
             <div class="p-8">
@@ -126,57 +113,39 @@
     </div>
 
     <script>
-        const API = 'http://127.0.0.1:8000';
+        const API = 'http://127.0.0.1:8000/donee';
         let token = localStorage.getItem('doneeToken') || null;
         let currentTab = 'discover'; 
         let currentActivityId = null;
 
-        if(token) showDashboard();
+        // Security check: If no token is provided, force redirection to the login portal.
+        if (!token) {
+            window.location.href = 'index.html';
+        } else {
+            showDashboard();
+        }
 
         function getHeaders() {
             return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
         }
 
-        // --- AUTH (Story 29, 30) ---
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPass').value;
-            try {
-                const res = await fetch(`${API}/donee/login`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    token = data.access_token;
-                    localStorage.setItem('doneeToken', token);
-                    showDashboard();
-                } else alert(data.detail || "Login failed");
-            } catch (err) { alert("Server error."); }
-        }
-
         async function logout() {
             if(confirm("Log out of your Donee account?")) {
-                await fetch(`${API}/donee/logout`, { method: 'POST', headers: getHeaders() });
+                await fetch(`${API}/logout`, { method: 'POST', headers: getHeaders() });
                 localStorage.removeItem('doneeToken');
-                token = null;
-                document.getElementById('loginView').style.display = 'flex';
-                document.getElementById('dashboardView').style.display = 'none';
+                window.location.href = 'index.html';
             }
         }
 
         function showDashboard() {
-            document.getElementById('loginView').style.display = 'none';
-            document.getElementById('dashboardView').style.display = 'flex';
             switchTab('discover');
         }
 
         // --- NAVIGATION & SEARCH ---
         function switchTab(tab) {
             currentTab = tab;
-            document.getElementById('searchInput').value = ''; // Reset search
+            document.getElementById('searchInput').value = ''; 
             
-            // Update UI Styles
             const activeClass = "text-left px-4 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold transition-all";
             const inactiveClass = "text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 font-semibold transition-all";
             
@@ -184,11 +153,9 @@
             document.getElementById('nav-favorites').className = tab === 'favorites' ? activeClass : inactiveClass;
             document.getElementById('nav-donations').className = tab === 'donations' ? activeClass : inactiveClass;
 
-            // Show/Hide Sections
             document.getElementById('section-activities').style.display = (tab === 'discover' || tab === 'favorites') ? 'grid' : 'none';
             document.getElementById('section-donations').style.display = tab === 'donations' ? 'block' : 'none';
             
-            // Set Titles & Load Data
             if(tab === 'discover') { document.getElementById('pageTitle').innerText = "🌍 Discover Activities"; loadActivities(); }
             if(tab === 'favorites') { document.getElementById('pageTitle').innerText = "❤️ My Favorites"; loadFavorites(); }
             if(tab === 'donations') { document.getElementById('pageTitle').innerText = "📜 Donation History"; loadDonations(); }
@@ -198,20 +165,19 @@
             const query = document.getElementById('searchInput').value;
             if(currentTab === 'discover') loadActivities(query);
             if(currentTab === 'favorites') loadFavorites(query);
-            // Story 31 requires searching past donations, but backend API currently doesn't take 'title' query for donations, so we skip search for donations.
         }
 
-        // --- ACTIVITIES & FAVORITES (Story 24, 26, 27, 28) ---
+        // --- ACTIVITIES & FAVORITES ---
         async function loadActivities(query = '') {
-            const res = await fetch(`${API}/donee/activities${query ? '?title='+query : ''}`, { headers: getHeaders() });
-            if(res.status === 401 || res.status === 403) return logout();
-            renderActivityCards(await res.json(), false);
+            const res = await fetch(`${API}/activities${query ? '?title='+query : ''}`, { headers: getHeaders() });
+            if(res.status === 401 || res.status === 403) window.location.href = 'index.html';
+            const data = await res.json();
+            renderActivityCards(data, false);
         }
 
         async function loadFavorites(query = '') {
-            const res = await fetch(`${API}/donee/favorites${query ? '?title='+query : ''}`, { headers: getHeaders() });
+            const res = await fetch(`${API}/favorites${query ? '?title='+query : ''}`, { headers: getHeaders() });
             const favorites = await res.json();
-            // Map favorites to extract the activity object for rendering
             const activities = favorites.map(f => f.activity).filter(a => a != null);
             renderActivityCards(activities, true);
         }
@@ -227,7 +193,6 @@
                     </div>
                     <h3 class="font-bold text-xl text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors">${a.title}</h3>
                     <p class="text-sm text-slate-500 line-clamp-2 mb-6">${a.description}</p>
-                    
                     <div class="mt-auto">
                         <div class="flex justify-between text-xs font-bold text-slate-800 mb-2">
                             <span>$${a.current_amount.toFixed(2)}</span>
@@ -241,10 +206,10 @@
             `}).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No activities found.</div>`;
         }
 
-        // --- MODAL & DONATION (Story 25, Donate) ---
+        // --- MODAL & DONATION ---
         async function openModal(id) {
             currentActivityId = id;
-            const res = await fetch(`${API}/donee/activities/${id}`, { headers: getHeaders() });
+            const res = await fetch(`${API}/activities/${id}`, { headers: getHeaders() });
             const a = await res.json();
             
             document.getElementById('modalTitle').innerText = a.title;
@@ -255,11 +220,9 @@
             const progress = Math.min((a.current_amount / a.target_amount) * 100, 100);
             setTimeout(() => { document.getElementById('modalProgress').style.width = `${progress}%`; }, 100);
 
-            // Reset inputs
             document.getElementById('donateAmount').value = '';
             document.getElementById('donateMessage').value = '';
             document.getElementById('donateAnon').checked = false;
-
             document.getElementById('donateModal').classList.remove('hidden');
         }
 
@@ -269,10 +232,10 @@
         }
 
         async function toggleFavoriteFromModal() {
-            const res = await fetch(`${API}/donee/favorites/${currentActivityId}`, { method: 'POST', headers: getHeaders() });
+            const res = await fetch(`${API}/favorites/${currentActivityId}`, { method: 'POST', headers: getHeaders() });
             const data = await res.json();
             alert(data.message);
-            if(currentTab === 'favorites') loadFavorites(); // refresh if we un-favorited
+            if(currentTab === 'favorites') loadFavorites();
         }
 
         async function submitDonation() {
@@ -282,7 +245,7 @@
 
             if(!amount || amount <= 0) return alert("Please enter a valid amount.");
 
-            const res = await fetch(`${API}/donee/activities/${currentActivityId}/donate`, {
+            const res = await fetch(`${API}/activities/${currentActivityId}/donate`, {
                 method: 'POST', headers: getHeaders(),
                 body: JSON.stringify({ amount, message: message || null, anonymous })
             });
@@ -296,9 +259,9 @@
             } else alert(data.detail);
         }
 
-        // --- DONATION HISTORY (Story 31, 32) ---
+        // --- DONATION HISTORY ---
         async function loadDonations() {
-            const res = await fetch(`${API}/donee/donations`, { headers: getHeaders() });
+            const res = await fetch(`${API}/donations`, { headers: getHeaders() });
             const donations = await res.json();
             
             document.getElementById('donationsList').innerHTML = donations.map(d => `
@@ -315,7 +278,7 @@
         }
 
         async function viewDonationDetail(id) {
-            const res = await fetch(`${API}/donee/donations/${id}`, { headers: getHeaders() });
+            const res = await fetch(`${API}/donations/${id}`, { headers: getHeaders() });
             const d = await res.json();
             alert(`📃 DONATION RECEIPT\n\nDonation ID: #${d.donation_id}\nActivity: ${d.activity_title}\nAmount: $${d.amount.toFixed(2)}\nDate: ${d.created_at}\nAnonymous: ${d.is_anonymous ? 'Yes' : 'No'}\nMessage: "${d.message}"`);
         }
