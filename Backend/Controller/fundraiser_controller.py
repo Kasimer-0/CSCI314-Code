@@ -109,7 +109,7 @@ class ViewPastActivityController:
         if error or activity.status not in ["Closed", "Suspended"]:
             raise HTTPException(status_code=404, detail="No such historical activity was found.")
         return activity
-
+    
 # ============================================================
 # Route Binding: Instantiate Classes and Execute
 # ============================================================

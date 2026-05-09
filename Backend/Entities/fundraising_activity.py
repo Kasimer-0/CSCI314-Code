@@ -55,7 +55,7 @@ class FundraisingActivityEntity:
         """Entity Logic (Story 14 & 23): View Activity"""
         db: Session = next(get_db())
         try:
-            activity = db.query(Activity).filter(Activity.activity_id == activity_id, Activity.profile_id == profile_id).first()
+            activity = db.query(Activity).filter(Activity.activity_id == activity_id, Activity.fundraiser_id == profile_id).first()
             if not activity:
                 return None, "Activity not found or unauthorized."
             return activity, None
