@@ -33,9 +33,10 @@ class UserProfile(Base):
     is_suspended = Column(Boolean, default=False)
 
     account = relationship("UserAccount", back_populates="profile")
-    bookmarks = relationship("Bookmark", back_populates="user_profile")
+    # The `back_populates` field here must match the field name in the Activity class.
+    activities = relationship("Activity", back_populates="creator") 
     donations = relationship("Donation", back_populates="donee_profile")
-    activities = relationship("Activity", back_populates="creator")
+    bookmarks = relationship("Bookmark", back_populates="user_profile")
 
 # ==========================================
 # 3. Category Entity
@@ -46,8 +47,9 @@ class Category(Base):
     category_id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
     description = Column(String, nullable=True)
+    is_archived = Column(Boolean, default=False) 
 
-    # 与 Activity 的关联
+    # Association with Activity
     activities = relationship("Activity", back_populates="category")
 
 # ==========================================
@@ -57,17 +59,20 @@ class Activity(Base):
     __tablename__ = "activities"
 
     activity_id = Column(Integer, primary_key=True, index=True)
-    profile_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False)
+    fundraiser_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False) 
     category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=True)
     
     title = Column(String, nullable=False)
     description = Column(String)
-    goal_amount = Column(Float, nullable=False)
+    target_amount = Column(Float, nullable=False) 
     current_amount = Column(Float, default=0.0)
     status = Column(String, default="Pending")
+    is_private = Column(Boolean, default=False) 
+    view_count = Column(Integer, default=0)    
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    creator = relationship("UserProfile", back_populates="activities")
+    # The relationship name here must match the one in UserProfile.
+    creator = relationship("UserProfile", back_populates="activities") 
     bookmarks = relationship("Bookmark", back_populates="activity")
     donations = relationship("Donation", back_populates="activity")
     category = relationship("Category", back_populates="activities")

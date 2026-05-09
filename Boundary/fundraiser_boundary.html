@@ -272,7 +272,16 @@
         async function viewPastDetail(id) {
             const res = await fetch(`${API}/history/${id}`, { headers: getHeaders() });
             const data = await res.json();
-            alert(`ARCHIVE DETAIL\n\nTitle: ${data.title}\nFinal Amount: $${data.current_amount}\nGoal: $${data.target_amount}\nStatus: ${data.status}`);
+            if (res.ok) {
+                alert(`--- Event Archive Details ---\n\n` +
+                    `Title: ${data.title}\n` +
+                    `Description: ${data.description}\n` +
+                    `Fundraising Progress: $${data.current_amount} / $${data.target_amount}\n` +
+                    `Status: ${data.status}\n` +
+                    `Created At: ${new Date(data.created_at).toLocaleDateString()}`);
+            } else {
+                alert("Unable to load event details：" + data.detail);
+            }
         }
     </script>
 </body>

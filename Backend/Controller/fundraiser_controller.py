@@ -105,8 +105,9 @@ class ViewPastActivityController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 23: View past fundraising activity"""
         activity, error = FundraisingActivityEntity.get_activity(activity_id, profile_id)
-        if error or activity.status != "Closed":
-            raise HTTPException(status_code=404, detail="Past activity not found.")
+        # History records include Closed and Suspended states.
+        if error or activity.status not in ["Closed", "Suspended"]:
+            raise HTTPException(status_code=404, detail="No such historical activity was found.")
         return activity
 
 # ============================================================
@@ -167,3 +168,15 @@ def route_search_past_activities(title: Optional[str] = Query(None), fr_user=Dep
 def route_view_past_activity(activity_id: int, fr_user=Depends(get_fundraiser)):
     """API for Story 23"""
     return ViewPastActivityController().execute(activity_id, fr_user.profile.profile_id)
+
+@router.get("/activities/{activity_id}/stats")
+def route_get_activity_stats(activity_id: int, fr_user=Depends(get_fundraiser)):
+    """API for Story 24"""
+    # Can combine existing logic from within an Entity.
+    views, _ = FundraisingActivityEntity.get_activity_views(activity_id, fr_user.profile.profile_id)
+    shortlists, _ = FundraisingActivityEntity.get_activity_shortlists(activity_id, fr_user.profile.profile_id)
+    return {
+        "title": views["title"],
+        "views": views["views"],
+        "shortlisted_times": shortlists["shortlisted_times"]
+    }

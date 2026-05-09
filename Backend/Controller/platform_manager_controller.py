@@ -28,7 +28,10 @@ class ManagerLoginController:
 class ManagerLogoutController:
     def execute(self):
         """Story 39: Logout of my account"""
-        return {"message": "Successfully logged out. Please discard your token."}
+        response, error = UserAccountEntity.logout_manager()
+        if error:
+            raise HTTPException(status_code=500, detail=error)
+        return response
 
 
 # ============================================================
