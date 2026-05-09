@@ -13,62 +13,68 @@
 </head>
 <body class="text-slate-800 flex h-screen overflow-hidden">
 
-    <div id="dashboardView" class="w-full h-full flex">
-        
-        <div class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-10">
-            <div class="p-8">
-                <h1 class="text-2xl font-extrabold text-emerald-600 flex items-center gap-2 mb-10">
-                    💚 GiveHope
-                </h1>
-                <nav class="flex flex-col gap-3">
-                    <button onclick="switchTab('discover')" id="nav-discover" class="text-left px-4 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold transition-all">🌍 Discover</button>
-                    <button onclick="switchTab('favorites')" id="nav-favorites" class="text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 font-semibold transition-all">❤️ My Favorites</button>
-                    <button onclick="switchTab('donations')" id="nav-donations" class="text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 font-semibold transition-all">📜 Donation History</button>
-                </nav>
-            </div>
-            <div class="p-6 border-t border-slate-100">
-                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 text-rose-500 font-bold bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors">🚪 Logout</button>
-            </div>
-        </div>
-
-        <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto">
-            
-            <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
-                <h2 id="pageTitle" class="text-2xl font-bold text-slate-800">Discover Activities</h2>
-                <div class="flex gap-2 w-96">
-                    <input type="text" id="searchInput" placeholder="Search activities by title..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
-                    <button onclick="executeSearch()" class="bg-slate-800 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-700 text-sm">Search</button>
-                </div>
-            </header>
-
-            <div class="p-10">
-                
-                <div id="section-activities" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    </div>
-
-                <div id="section-donations" class="hidden">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                    <th class="p-5 font-bold">Donation ID</th>
-                                    <th class="p-5 font-bold">Activity Name</th>
-                                    <th class="p-5 font-bold">Amount</th>
-                                    <th class="p-5 font-bold">Date</th>
-                                    <th class="p-5 font-bold text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="donationsList" class="divide-y divide-slate-100">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-
+    <div id="messageModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform border border-slate-100">
+            <div class="p-8 text-center">
+                <div id="messageIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"></div>
+                <h3 id="messageTitle" class="text-xl font-black text-slate-900 mb-2">Notification</h3>
+                <p id="messageText" class="text-sm text-slate-500 mb-6"></p>
+                <button onclick="closeMessage()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-all">OK</button>
             </div>
         </div>
     </div>
 
-    <div id="donateModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[90] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+                <h3 id="confirmTitle" class="text-xl font-black text-slate-900 mb-2">Confirm Action</h3>
+                <p id="confirmText" class="text-sm text-slate-500 mb-6"></p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirm()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200">Cancel</button>
+                    <button id="confirmExecuteBtn" class="flex-1 bg-rose-500 text-white font-bold py-3 rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-100">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[80] p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div class="p-8 relative">
+                <button onclick="closeReceipt()" class="absolute top-6 right-6 text-2xl text-slate-300 hover:text-slate-900 transition-colors">&times;</button>
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🧾</div>
+                    <h3 class="text-2xl font-black text-slate-900">Donation Receipt</h3>
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1" id="receiptId">#0000</p>
+                </div>
+                <div class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 text-sm">
+                    <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                        <strong class="text-slate-500">Activity</strong>
+                        <span class="font-bold text-right pl-4" id="receiptActivity">Campaign Name</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <strong class="text-slate-500">Date</strong>
+                        <span class="font-medium" id="receiptDate">YYYY-MM-DD</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <strong class="text-slate-500">Anonymous</strong>
+                        <span class="font-bold" id="receiptAnon">No</span>
+                    </div>
+                    <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                        <strong class="text-slate-500">Message</strong>
+                        <span class="italic text-right text-slate-600 pl-4" id="receiptMessage">"Keep it up!"</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <strong class="text-slate-800 text-lg">Total Amount</strong>
+                        <span class="font-black text-2xl text-emerald-600" id="receiptAmount">$0.00</span>
+                    </div>
+                </div>
+                <button onclick="closeReceipt()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-all">Close Receipt</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="donateModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-[500px] overflow-hidden transform transition-all">
             <div class="bg-emerald-500 p-6 text-white relative">
                 <button onclick="closeModal()" class="absolute top-4 right-4 text-emerald-100 hover:text-white bg-emerald-600/50 rounded-full w-8 h-8 flex items-center justify-center font-bold">&times;</button>
@@ -77,7 +83,7 @@
             </div>
             
             <div class="p-8">
-                <p id="modalDesc" class="text-slate-600 text-sm mb-6 leading-relaxed">Description goes here...</p>
+                <p id="modalDesc" class="text-slate-600 text-sm mb-6 leading-relaxed max-h-32 overflow-y-auto pr-2 custom-scrollbar">Description goes here...</p>
                 
                 <div class="mb-8">
                     <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
@@ -92,196 +98,77 @@
                 <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Donation Amount ($)</label>
-                        <input type="number" id="donateAmount" placeholder="e.g. 50.00" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-lg text-emerald-600">
+                        <input type="number" id="donateAmount" placeholder="e.g. 50.00" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-lg text-emerald-600 transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Message of Support (Optional)</label>
-                        <input type="text" id="donateMessage" placeholder="Keep fighting!" class="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                        <input type="text" id="donateMessage" placeholder="Keep fighting!" class="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm transition-all">
                     </div>
                     <label class="flex items-center gap-2 cursor-pointer mt-2">
-                        <input type="checkbox" id="donateAnon" class="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500">
+                        <input type="checkbox" id="donateAnon" class="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500 transition-all">
                         <span class="text-sm font-semibold text-slate-600">Donate Anonymously</span>
                     </label>
                 </div>
 
                 <div class="flex gap-3 mt-8">
-                    <button onclick="toggleFavoriteFromModal()" id="modalFavBtn" class="px-5 py-3 border-2 border-slate-200 text-slate-500 font-bold rounded-xl hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-colors">❤️ Save</button>
-                    <button onclick="submitDonation()" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-transform active:scale-95 shadow-md">Make Donation</button>
+                    <button onclick="toggleFavoriteFromModal()" id="modalFavBtn" class="px-5 py-3 border-2 border-slate-200 text-slate-500 font-bold rounded-xl hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-colors active:scale-95">❤️ Save</button>
+                    <button onclick="submitDonation()" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-transform active:scale-95 shadow-lg shadow-slate-300">Make Donation</button>
                 </div>
             </div>
         </div>
     </div>
+    <div id="dashboardView" class="w-full h-full flex">
+        
+        <div class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-10">
+            <div class="p-8">
+                <h1 class="text-2xl font-extrabold text-emerald-600 flex items-center gap-2 mb-10 tracking-tight">
+                    💚 GiveHope
+                </h1>
+                <nav class="flex flex-col gap-3">
+                    <button onclick="switchTab('discover')" id="nav-discover" class="text-left px-4 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold transition-all">🌍 Discover</button>
+                    <button onclick="switchTab('favorites')" id="nav-favorites" class="text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 font-semibold transition-all">❤️ My Favorites</button>
+                    <button onclick="switchTab('donations')" id="nav-donations" class="text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 font-semibold transition-all">📜 Donation History</button>
+                </nav>
+            </div>
+            <div class="p-6 border-t border-slate-100">
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 text-rose-500 font-bold bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors active:scale-95">🚪 Logout</button>
+            </div>
+        </div>
 
-    <script>
-        const API = 'http://127.0.0.1:8000/donee';
-        let token = localStorage.getItem('doneeToken') || null;
-        let currentTab = 'discover'; 
-        let currentActivityId = null;
-
-        // Security check: If no token is provided, force redirection to the login portal.
-        if (!token) {
-            window.location.href = 'index.html';
-        } else {
-            showDashboard();
-        }
-
-        function getHeaders() {
-            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-        }
-
-        async function logout() {
-            if(confirm("Log out of your Donee account?")) {
-                await fetch(`${API}/logout`, { method: 'POST', headers: getHeaders() });
-                localStorage.removeItem('doneeToken');
-                window.location.href = 'index.html';
-            }
-        }
-
-        function showDashboard() {
-            switchTab('discover');
-        }
-
-        // --- NAVIGATION & SEARCH ---
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('searchInput').value = ''; 
+        <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto relative">
             
-            const activeClass = "text-left px-4 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold transition-all";
-            const inactiveClass = "text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-500 font-semibold transition-all";
-            
-            document.getElementById('nav-discover').className = tab === 'discover' ? activeClass : inactiveClass;
-            document.getElementById('nav-favorites').className = tab === 'favorites' ? activeClass : inactiveClass;
-            document.getElementById('nav-donations').className = tab === 'donations' ? activeClass : inactiveClass;
+            <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
+                <h2 id="pageTitle" class="text-2xl font-bold text-slate-800 tracking-tight">Discover Activities</h2>
+                <div class="flex gap-2 w-96">
+                    <input type="text" id="searchInput" placeholder="Search activities by title..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm transition-all shadow-sm">
+                    <button onclick="executeSearch()" class="bg-slate-800 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-700 text-sm transition-all shadow-md active:scale-95">Search</button>
+                </div>
+            </header>
 
-            document.getElementById('section-activities').style.display = (tab === 'discover' || tab === 'favorites') ? 'grid' : 'none';
-            document.getElementById('section-donations').style.display = tab === 'donations' ? 'block' : 'none';
-            
-            if(tab === 'discover') { document.getElementById('pageTitle').innerText = "🌍 Discover Activities"; loadActivities(); }
-            if(tab === 'favorites') { document.getElementById('pageTitle').innerText = "❤️ My Favorites"; loadFavorites(); }
-            if(tab === 'donations') { document.getElementById('pageTitle').innerText = "📜 Donation History"; loadDonations(); }
-        }
+            <div class="p-10">
+                <div id="section-activities" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
 
-        function executeSearch() {
-            const query = document.getElementById('searchInput').value;
-            if(currentTab === 'discover') loadActivities(query);
-            if(currentTab === 'favorites') loadFavorites(query);
-        }
-
-        // --- ACTIVITIES & FAVORITES ---
-        async function loadActivities(query = '') {
-            const res = await fetch(`${API}/activities${query ? '?title='+query : ''}`, { headers: getHeaders() });
-            if(res.status === 401 || res.status === 403) window.location.href = 'index.html';
-            const data = await res.json();
-            renderActivityCards(data, false);
-        }
-
-        async function loadFavorites(query = '') {
-            const res = await fetch(`${API}/favorites${query ? '?title='+query : ''}`, { headers: getHeaders() });
-            const favorites = await res.json();
-            const activities = favorites.map(f => f.activity).filter(a => a != null);
-            renderActivityCards(activities, true);
-        }
-
-        function renderActivityCards(activities, isFavoriteView) {
-            document.getElementById('section-activities').innerHTML = activities.map(a => {
-                const progress = Math.min((a.current_amount / a.target_amount) * 100, 100);
-                return `
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onclick="openModal(${a.activity_id})">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="bg-emerald-100 text-emerald-700 text-xs font-black px-2 py-1 rounded tracking-widest uppercase">Ongoing</span>
-                        ${isFavoriteView ? `<span class="text-rose-500 text-xl">❤️</span>` : ''}
-                    </div>
-                    <h3 class="font-bold text-xl text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors">${a.title}</h3>
-                    <p class="text-sm text-slate-500 line-clamp-2 mb-6">${a.description}</p>
-                    <div class="mt-auto">
-                        <div class="flex justify-between text-xs font-bold text-slate-800 mb-2">
-                            <span>$${a.current_amount.toFixed(2)}</span>
-                            <span class="text-slate-400">Goal: $${a.target_amount.toFixed(2)}</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="bg-emerald-500 h-2 rounded-full" style="width: ${progress}%"></div>
-                        </div>
+                <div id="section-donations" class="hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                    <th class="p-5 font-bold">Donation ID</th>
+                                    <th class="p-5 font-bold">Activity Name</th>
+                                    <th class="p-5 font-bold">Amount</th>
+                                    <th class="p-5 font-bold">Date</th>
+                                    <th class="p-5 font-bold text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donationsList" class="divide-y divide-slate-100"></tbody>
+                        </table>
                     </div>
                 </div>
-            `}).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No activities found.</div>`;
-        }
 
-        // --- MODAL & DONATION ---
-        async function openModal(id) {
-            currentActivityId = id;
-            const res = await fetch(`${API}/activities/${id}`, { headers: getHeaders() });
-            const a = await res.json();
-            
-            document.getElementById('modalTitle').innerText = a.title;
-            document.getElementById('modalDesc').innerText = a.description;
-            document.getElementById('modalCurrent').innerText = a.current_amount.toFixed(2);
-            document.getElementById('modalTarget').innerText = a.target_amount.toFixed(2);
-            
-            const progress = Math.min((a.current_amount / a.target_amount) * 100, 100);
-            setTimeout(() => { document.getElementById('modalProgress').style.width = `${progress}%`; }, 100);
+            </div>
+        </div>
+    </div>
 
-            document.getElementById('donateAmount').value = '';
-            document.getElementById('donateMessage').value = '';
-            document.getElementById('donateAnon').checked = false;
-            document.getElementById('donateModal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('donateModal').classList.add('hidden');
-            document.getElementById('modalProgress').style.width = '0%';
-        }
-
-        async function toggleFavoriteFromModal() {
-            const res = await fetch(`${API}/favorites/${currentActivityId}`, { method: 'POST', headers: getHeaders() });
-            const data = await res.json();
-            alert(data.message);
-            if(currentTab === 'favorites') loadFavorites();
-        }
-
-        async function submitDonation() {
-            const amount = parseFloat(document.getElementById('donateAmount').value);
-            const message = document.getElementById('donateMessage').value;
-            const anonymous = document.getElementById('donateAnon').checked;
-
-            if(!amount || amount <= 0) return alert("Please enter a valid amount.");
-
-            const res = await fetch(`${API}/activities/${currentActivityId}/donate`, {
-                method: 'POST', headers: getHeaders(),
-                body: JSON.stringify({ amount, message: message || null, anonymous })
-            });
-
-            const data = await res.json();
-            if(res.ok) {
-                alert(`Thank you! You successfully donated $${amount.toFixed(2)}!`);
-                closeModal();
-                if(currentTab === 'discover') loadActivities();
-                if(currentTab === 'favorites') loadFavorites();
-            } else alert(data.detail);
-        }
-
-        // --- DONATION HISTORY ---
-        async function loadDonations() {
-            const res = await fetch(`${API}/donations`, { headers: getHeaders() });
-            const donations = await res.json();
-            
-            document.getElementById('donationsList').innerHTML = donations.map(d => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="p-5 font-mono text-sm text-slate-500">#${d.donation_id}</td>
-                    <td class="p-5 font-bold text-slate-800">${d.activity_title}</td>
-                    <td class="p-5 font-black text-emerald-600">$${d.amount.toFixed(2)}</td>
-                    <td class="p-5 text-sm text-slate-500">${d.created_at.split('T')[0]}</td>
-                    <td class="p-5 text-right">
-                        <button onclick="viewDonationDetail(${d.donation_id})" class="text-sm font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-lg hover:bg-slate-100">View Receipt</button>
-                    </td>
-                </tr>
-            `).join('') || `<tr><td colspan="5" class="text-center py-10 text-slate-400 font-bold">No past donations found.</td></tr>`;
-        }
-
-        async function viewDonationDetail(id) {
-            const res = await fetch(`${API}/donations/${id}`, { headers: getHeaders() });
-            const d = await res.json();
-            alert(`📃 DONATION RECEIPT\n\nDonation ID: #${d.donation_id}\nActivity: ${d.activity_title}\nAmount: $${d.amount.toFixed(2)}\nDate: ${d.created_at}\nAnonymous: ${d.is_anonymous ? 'Yes' : 'No'}\nMessage: "${d.message}"`);
-        }
-    </script>
+    <script src="donee.js"></script>
 </body>
 </html>

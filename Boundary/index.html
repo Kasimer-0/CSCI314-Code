@@ -13,9 +13,19 @@
         .role-selected { border-width: 3px !important; transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6 relative">
 
-    <div class="max-w-4xl w-full">
+    <div id="messageModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 transition-all">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform border border-slate-100">
+            <div class="p-8 text-center">
+                <div id="messageIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"></div>
+                <h3 id="messageTitle" class="text-xl font-black text-slate-900 mb-2">Notification</h3>
+                <p id="messageText" class="text-sm text-slate-500 mb-6"></p>
+                <button onclick="closeMessage()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-all shadow-lg active:scale-95">OK</button>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-4xl w-full z-10">
         <div class="text-center mb-12">
             <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-3">Charity Impact Portal</h1>
             <p class="text-slate-500 font-medium">Select your role to access the fundraising management system</p>
@@ -57,10 +67,11 @@
             <div class="space-y-4">
                 <input type="email" id="email" placeholder="Email Address" class="w-full px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 transition-all font-medium">
                 <input type="password" id="password" placeholder="Password" value="password123" class="w-full px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 transition-all font-medium">
-                <button onclick="handleLogin()" id="loginBtn" class="w-full text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-slate-200 mt-4">Sign In</button>
+                <button onclick="handleLogin()" id="loginBtn" class="w-full text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-slate-200 mt-4 active:scale-95 flex justify-center items-center gap-2">
+                    <span id="loginBtnText">Sign In</span>
+                </button>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -106,6 +117,20 @@
             }
         };
 
+        // --- Modal frame control functions---
+        function showMessage(title, text, isError = false) {
+            const icon = document.getElementById('messageIcon');
+            icon.innerHTML = isError ? '❌' : '✅';
+            icon.className = `w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl ${isError ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`;
+            document.getElementById('messageTitle').innerText = title;
+            document.getElementById('messageText').innerText = text;
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
+
+        function closeMessage() { 
+            document.getElementById('messageModal').classList.add('hidden'); 
+        }
+
         function selectRole(role) {
             selectedRole = role;
             const config = roleConfigs[role];
@@ -129,9 +154,10 @@
             emailInput.className = `w-full px-5 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:outline-none focus:ring-2 ${config.ring} transition-all font-medium`;
             
             const loginBtn = document.getElementById('loginBtn');
-            loginBtn.className = `w-full text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-slate-200 mt-4 ${config.btn}`;
+            loginBtn.className = `w-full text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-slate-200 mt-4 active:scale-95 flex justify-center items-center gap-2 ${config.btn}`;
 
-            // Scroll to form
+            // Automatically focus on the email input box and scroll.
+            setTimeout(() => emailInput.focus(), 100);
             loginSection.scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -141,6 +167,17 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            if(!email || !password) {
+                return showMessage("Authentication Failed", "Please enter both email and password.", true);
+            }
+
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('loginBtnText');
+            
+            // Button state change (Loading effect)
+            loginBtn.disabled = true;
+            btnText.innerText = "Authenticating...";
+
             try {
                 const res = await fetch(`${API}${config.endpoint}`, {
                     method: 'POST',
@@ -148,15 +185,25 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
+                
                 if (res.ok) {
                     localStorage.setItem(config.storage, data.access_token);
-                    // After successful login, you will be redirected to the corresponding function page.
-                    window.location.href = config.redirect;
+                    // Use a modal prompt when logging in successfully to enhance the sense of ceremony.
+                    showMessage("Access Granted", "Redirecting to your workspace...");
+                    setTimeout(() => {
+                        window.location.href = config.redirect;
+                    }, 800); // Give the user a moment to see the success message
                 } else {
-                    alert(data.detail || "Login failed");
+                    // Use a modal prompt instead of alert
+                    showMessage("Login Failed", data.detail || "Invalid credentials provided.", true);
                 }
             } catch (err) {
-                alert("Server error. Make sure your backend is running.");
+                // Use a modal prompt instead of alert, handle network errors
+                showMessage("Connection Error", "Cannot reach the server. Please ensure the backend is running.", true);
+            } finally {
+                // Restore button state
+                loginBtn.disabled = false;
+                btnText.innerText = "Sign In";
             }
         }
     </script>

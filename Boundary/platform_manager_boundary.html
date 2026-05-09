@@ -12,6 +12,75 @@
 </head>
 <body class="text-slate-800 flex h-screen overflow-hidden">
 
+    <div id="messageModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform border border-slate-100">
+            <div class="p-8 text-center">
+                <div id="messageIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"></div>
+                <h3 id="messageTitle" class="text-xl font-black text-slate-900 mb-2">Notification</h3>
+                <p id="messageText" class="text-sm text-slate-500 mb-6"></p>
+                <button onclick="closeMessage()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-all">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[90] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+                <h3 id="confirmTitle" class="text-xl font-black text-slate-900 mb-2">Confirm Action</h3>
+                <p id="confirmText" class="text-sm text-slate-500 mb-6"></p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirm()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200">Cancel</button>
+                    <button id="confirmExecuteBtn" class="flex-1 bg-rose-500 text-white font-bold py-3 rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-100">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[80] p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100">
+            <div class="p-10">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <span id="detailLabel" class="text-[10px] font-black bg-violet-600 text-white px-2 py-1 rounded uppercase tracking-widest">CATEGORY</span>
+                        <h3 id="detailMainTitle" class="text-3xl font-black text-slate-900 mt-3">Title</h3>
+                    </div>
+                    <button onclick="closeDetail()" class="text-2xl text-slate-300 hover:text-slate-900">&times;</button>
+                </div>
+                <div id="detailContent" class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8">
+                    </div>
+                <button onclick="closeDetail()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-all">Close View</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editCategoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[80] p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden transform transition-all border border-slate-100">
+            <div class="p-10">
+                <div class="mb-8">
+                    <div class="text-xs font-bold uppercase tracking-widest text-violet-500 mb-2">Category Action</div>
+                    <h3 class="text-2xl font-black text-slate-900">Update Category</h3>
+                </div>
+
+                <div class="space-y-4 mb-8">
+                    <input type="hidden" id="editCatId">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Category Name</label>
+                        <input type="text" id="editCatName" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 font-bold text-slate-800 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Description</label>
+                        <input type="text" id="editCatDesc" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-600 transition-all">
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="closeEditCategory()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl hover:bg-slate-200 transition-all">Cancel</button>
+                    <button onclick="submitUpdateCategory()" class="flex-2 bg-violet-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-violet-700 transition-all shadow-lg active:scale-95">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl z-20 relative">
         <div class="p-8">
             <h1 class="text-2xl font-extrabold text-white flex items-center gap-2 mb-10 tracking-tight">
@@ -28,7 +97,6 @@
     </div>
 
     <div class="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto relative">
-        
         <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
             <div>
                 <h2 id="pageTitle" class="text-3xl font-extrabold text-slate-900 tracking-tight">Category Management</h2>
@@ -42,7 +110,6 @@
         </header>
 
         <div class="p-10">
-            
             <div id="section-categories">
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8 flex gap-4 items-end">
                     <div class="w-1/3">
@@ -62,9 +129,9 @@
                 <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mb-8 text-center">
                     <h3 class="text-xl font-bold text-slate-800 mb-6 tracking-tight">Select Reporting Period</h3>
                     <div class="flex justify-center gap-4">
-                        <button onclick="generateReport('daily')" class="w-40 bg-indigo-50 text-indigo-600 border-2 border-indigo-200 font-bold py-4 rounded-2xl hover:bg-indigo-100 hover:border-indigo-300 transition-all">📅 Daily</button>
-                        <button onclick="generateReport('weekly')" class="w-40 bg-violet-50 text-violet-600 border-2 border-violet-200 font-bold py-4 rounded-2xl hover:bg-violet-100 hover:border-violet-300 transition-all">📆 Weekly</button>
-                        <button onclick="generateReport('monthly')" class="w-40 bg-fuchsia-50 text-fuchsia-600 border-2 border-fuchsia-200 font-bold py-4 rounded-2xl hover:bg-fuchsia-100 hover:border-fuchsia-300 transition-all">🗓️ Monthly</button>
+                        <button onclick="generateReport('daily')" class="w-40 bg-indigo-50 text-indigo-600 border-2 border-indigo-200 font-bold py-4 rounded-2xl hover:bg-indigo-100 hover:border-indigo-300 transition-all shadow-sm">📅 Daily</button>
+                        <button onclick="generateReport('weekly')" class="w-40 bg-violet-50 text-violet-600 border-2 border-violet-200 font-bold py-4 rounded-2xl hover:bg-violet-100 hover:border-violet-300 transition-all shadow-sm">📆 Weekly</button>
+                        <button onclick="generateReport('monthly')" class="w-40 bg-fuchsia-50 text-fuchsia-600 border-2 border-fuchsia-200 font-bold py-4 rounded-2xl hover:bg-fuchsia-100 hover:border-fuchsia-300 transition-all shadow-sm">🗓️ Monthly</button>
                     </div>
                 </div>
 
@@ -89,131 +156,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <script>
-        const API = 'http://127.0.0.1:8000/platform';
-        let token = localStorage.getItem('pmToken') || null;
-
-        //// Security check: If no token is provided, force redirection to the login portal.
-        if (!token) {
-            window.location.href = 'index.html';
-        } else {
-            showDashboard();
-        }
-
-        function getHeaders() {
-            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-        }
-
-        async function logout() {
-            if(confirm("Log out of Manager Portal?")) {
-                await fetch(`${API}/logout`, { method: 'POST', headers: getHeaders() });
-                localStorage.removeItem('pmToken');
-                window.location.href = 'index.html';
-            }
-        }
-
-        function showDashboard() {
-            switchTab('categories');
-        }
-
-        function switchTab(tab) {
-            document.getElementById('section-categories').style.display = tab === 'categories' ? 'block' : 'none';
-            document.getElementById('section-reports').style.display = tab === 'reports' ? 'block' : 'none';
-            document.getElementById('searchContainer').style.visibility = tab === 'reports' ? 'hidden' : 'visible';
-            
-            document.getElementById('pageTitle').innerText = tab === 'categories' ? "Category Management" : "Data Reports";
-            document.getElementById('pageSubtitle').innerText = tab === 'categories' ? "Organize fundraising activities globally" : "Generate macro-level insights";
-
-            const activeClass = "text-left px-4 py-3 rounded-xl bg-slate-800 text-violet-400 font-bold transition-all";
-            const inactiveClass = "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all";
-            
-            document.getElementById('nav-categories').className = tab === 'categories' ? activeClass : inactiveClass;
-            document.getElementById('nav-reports').className = tab === 'reports' ? activeClass : inactiveClass;
-            
-            if(tab === 'categories') loadCategories();
-        }
-
-        function executeSearch() {
-            const q = document.getElementById('searchInput').value;
-            loadCategories(q);
-        }
-
-        // --- CATEGORIES (Story 33-37) ---
-        async function loadCategories(nameQuery = '') {
-            const res = await fetch(`${API}/categories${nameQuery ? '?name='+nameQuery : ''}`, { headers: getHeaders() });
-            if(res.status === 401 || res.status === 403) window.location.href = 'index.html';
-            const categories = await res.json();
-            
-            document.getElementById('categoryList').innerHTML = categories.map(c => `
-                <div class="bg-white p-6 rounded-3xl border border-slate-200 hover:border-violet-300 transition-all shadow-sm">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded tracking-widest uppercase">ID: ${c.category_id}</span>
-                        <span class="text-xs font-bold px-2 py-1 rounded ${c.is_archived ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${c.is_archived ? 'Suspended' : 'Active'}</span>
-                    </div>
-                    <h3 class="font-bold text-xl text-slate-900 mb-1">${c.name}</h3>
-                    <p class="text-sm text-slate-500 mb-6 truncate">${c.description || 'No description'}</p>
-                    <div class="flex gap-2 border-t border-slate-50 pt-4">
-                        <button onclick="viewCategory(${c.category_id})" class="flex-1 text-xs font-bold text-indigo-600 bg-indigo-50 py-2 rounded-xl hover:bg-indigo-100">View</button>
-                        ${!c.is_archived ? `
-                        <button onclick="updateCategory(${c.category_id}, '${c.name}', '${c.description || ''}')" class="flex-1 text-xs font-bold text-slate-700 bg-slate-100 py-2 rounded-xl hover:bg-slate-200">Edit</button>
-                        <button onclick="suspendCategory(${c.category_id})" class="flex-1 text-xs font-bold text-rose-600 bg-rose-50 py-2 rounded-xl hover:bg-rose-100">Suspend</button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('') || `<div class="col-span-full text-center py-10 text-slate-400 font-bold">No categories found.</div>`;
-        }
-
-        async function createCategory() {
-            const name = document.getElementById('createCatName').value;
-            const description = document.getElementById('createCatDesc').value;
-            if(!name) return alert("Category Name required.");
-            const res = await fetch(`${API}/categories`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify({ name, description })
-            });
-            if(res.ok) { document.getElementById('createCatName').value = ''; document.getElementById('createCatDesc').value = ''; loadCategories(); }
-            else alert("Failed to create category.");
-        }
-
-        async function viewCategory(id) {
-            const res = await fetch(`${API}/categories/${id}`, { headers: getHeaders() });
-            const c = await res.json();
-            alert(`CATEGORY DETAILS\n\nName: ${c.name}\nDesc: ${c.description || 'N/A'}\nStatus: ${c.is_archived ? 'Suspended' : 'Active'}`);
-        }
-
-        async function updateCategory(id, oldName, oldDesc) {
-            const name = prompt("New Category Name:", oldName);
-            if(!name) return;
-            const desc = prompt("New Description:", oldDesc);
-            await fetch(`${API}/categories/${id}`, {
-                method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ name, description: desc })
-            });
-            loadCategories();
-        }
-
-        async function suspendCategory(id) {
-            if(confirm("Suspend this category?")) {
-                await fetch(`${API}/categories/${id}/suspend`, { method: 'POST', headers: getHeaders() });
-                loadCategories();
-            }
-        }
-
-        // --- REPORTS (Story 40-42) ---
-        async function generateReport(type) {
-            const res = await fetch(`${API}/reports/${type}`, { headers: getHeaders() });
-            if(res.ok) {
-                const result = await res.json();
-                document.getElementById('reportCanvas').classList.remove('hidden');
-                document.getElementById('repTypeLabel').innerText = result.report_type;
-                document.getElementById('repCamps').innerText = result.data.new_activities_launched;
-                document.getElementById('repTrans').innerText = result.data.transactions_count;
-                document.getElementById('repFunds').innerText = "$" + parseFloat(result.data.total_donations_amount).toLocaleString(undefined, {minimumFractionDigits: 2});
-                document.getElementById('repDate').innerText = `Period: ${result.data.period_start.split('T')[0]} to ${result.data.period_end.split('T')[0]}`;
-            } else alert("Failed to generate report.");
-        }
-    </script>
+    <script src="platform_manager.js"></script>
 </body>
 </html>

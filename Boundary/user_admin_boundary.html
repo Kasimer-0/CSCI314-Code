@@ -12,6 +12,61 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 flex overflow-hidden">
 
+    <div id="messageModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform border border-slate-100">
+            <div class="p-8 text-center">
+                <div id="messageIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"></div>
+                <h3 id="messageTitle" class="text-xl font-black text-slate-900 mb-2">Notification</h3>
+                <p id="messageText" class="text-sm text-slate-500 mb-6"></p>
+                <button onclick="closeMessage()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-all">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[90] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+                <h3 id="confirmTitle" class="text-xl font-black text-slate-900 mb-2">Confirm Action</h3>
+                <p id="confirmText" class="text-sm text-slate-500 mb-6"></p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirm()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200">Cancel</button>
+                    <button id="confirmExecuteBtn" class="flex-1 bg-rose-500 text-white font-bold py-3 rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-100">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="promptModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[80] p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div class="p-10">
+                <h3 id="promptTitle" class="text-2xl font-black text-slate-900 mb-2">Update Information</h3>
+                <p id="promptSubtitle" class="text-sm text-slate-500 mb-6"></p>
+                <input type="text" id="promptInput" class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl mb-6 focus:ring-2 focus:ring-slate-900 outline-none font-bold">
+                <div class="flex gap-3">
+                    <button onclick="closePrompt()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancel</button>
+                    <button id="promptSubmitBtn" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[70] p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100">
+            <div class="p-10">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <span id="detailLabel" class="text-[10px] font-black bg-slate-900 text-white px-2 py-1 rounded uppercase tracking-widest">DETAILS</span>
+                        <h3 id="detailMainTitle" class="text-3xl font-black text-slate-900 mt-3">User Detail</h3>
+                    </div>
+                    <button onclick="closeDetail()" class="text-2xl text-slate-300 hover:text-slate-900">&times;</button>
+                </div>
+                <div id="detailContent" class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8">
+                    </div>
+                <button onclick="closeDetail()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-all">Close View</button>
+            </div>
+        </div>
+    </div>
     <div class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-2xl z-20">
         <div class="p-8">
             <h1 class="text-2xl font-extrabold text-white flex items-center gap-2 mb-10 tracking-tight">
@@ -28,7 +83,6 @@
     </div>
 
     <div class="flex-1 flex flex-col h-screen overflow-y-auto">
-        
         <header class="glass-panel sticky top-0 px-10 py-6 border-b border-slate-200 z-10 flex justify-between items-center">
             <div>
                 <h2 id="pageTitle" class="text-3xl font-extrabold text-slate-900 tracking-tight">User Accounts</h2>
@@ -36,23 +90,22 @@
             </div>
             <div class="flex gap-2 w-96">
                 <input type="text" id="searchInput" placeholder="Search..." class="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm">
-                <button onclick="executeSearch()" class="bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 text-sm">Search</button>
+                <button onclick="executeSearch()" class="bg-slate-900 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-800 text-sm transition-all">Search</button>
             </div>
         </header>
 
         <div class="p-10">
-            
             <div id="section-accounts">
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8 flex items-end gap-4">
                     <div class="flex-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">New User Email</label>
-                        <input type="email" id="newAccEmail" class="w-full mt-1 px-4 py-2 border rounded-xl bg-slate-50" placeholder="user@example.com">
+                        <input type="email" id="newAccEmail" class="w-full mt-1 px-4 py-2 border rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="user@example.com">
                     </div>
                     <div class="flex-1">
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
-                        <input type="password" id="newAccPass" class="w-full mt-1 px-4 py-2 border rounded-xl bg-slate-50" placeholder="min 6 chars">
+                        <input type="password" id="newAccPass" class="w-full mt-1 px-4 py-2 border rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="min 6 chars">
                     </div>
-                    <button onclick="createAccount()" class="bg-slate-900 text-white font-bold px-6 py-2 rounded-xl hover:bg-slate-800 h-[42px] shadow-lg">Create Account</button>
+                    <button onclick="createAccount()" class="bg-slate-900 text-white font-bold px-6 py-2 rounded-xl hover:bg-slate-800 h-[42px] shadow-lg transition-all active:scale-95">Create Account</button>
                 </div>
                 <div id="accountsList" class="grid grid-cols-1 gap-3"></div>
             </div>
@@ -61,174 +114,28 @@
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8 grid grid-cols-4 gap-4 items-end">
                     <div>
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Account ID</label>
-                        <input type="number" id="newProfAccId" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50" placeholder="e.g. 15">
+                        <input type="number" id="newProfAccId" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900" placeholder="e.g. 15">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Username</label>
-                        <input type="text" id="newProfName" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50" placeholder="Full Name">
+                        <input type="text" id="newProfName" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900" placeholder="Full Name">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
-                        <select id="newProfRole" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50">
+                        <select id="newProfRole" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900">
                             <option value="1">1 - Donee</option>
                             <option value="2">2 - Fundraiser</option>
                             <option value="3">3 - Platform Manager</option>
                             <option value="0">0 - Admin</option>
                         </select>
                     </div>
-                    <button onclick="createProfile()" class="bg-slate-900 text-white font-bold px-4 py-2 rounded-xl hover:bg-slate-800 h-[42px] shadow-lg">Link Profile</button>
+                    <button onclick="createProfile()" class="bg-slate-900 text-white font-bold px-4 py-2 rounded-xl hover:bg-slate-800 h-[42px] shadow-lg transition-all active:scale-95">Link Profile</button>
                 </div>
                 <div id="profilesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
-
         </div>
     </div>
 
-    <script>
-        const API = 'http://127.0.0.1:8000/user-admin';
-        let token = localStorage.getItem('adminToken') || null;
-
-        // Security check: If no token is present, force redirection to the login portal.
-        if (!token) {
-            window.location.href = 'index.html';
-        } else {
-            loadAccounts();
-        }
-
-        function getHeaders() {
-            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-        }
-
-        async function logout() {
-            if(confirm("Are you sure you want to logout?")) {
-                await fetch(`${API}/logout`, { method: 'POST', headers: getHeaders() });
-                localStorage.removeItem('adminToken');
-                window.location.href = 'index.html';
-            }
-        }
-
-        function switchTab(tab) {
-            document.getElementById('section-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
-            document.getElementById('section-profiles').style.display = tab === 'profiles' ? 'block' : 'none';
-            
-            document.getElementById('pageTitle').innerText = tab === 'accounts' ? "User Accounts" : "User Profiles";
-            document.getElementById('pageSubtitle').innerText = tab === 'accounts' ? "Manage system access credentials" : "Manage personal details and roles";
-
-            const activeClass = "text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-bold transition-all";
-            const inactiveClass = "text-left px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 font-semibold transition-all";
-            
-            document.getElementById('nav-accounts').className = tab === 'accounts' ? activeClass : inactiveClass;
-            document.getElementById('nav-profiles').className = tab === 'profiles' ? activeClass : inactiveClass;
-            
-            if(tab === 'profiles') loadProfiles();
-            else loadAccounts();
-        }
-
-        function executeSearch() {
-            const q = document.getElementById('searchInput').value;
-            if(document.getElementById('section-accounts').style.display !== 'none') loadAccounts(q);
-            else loadProfiles(q);
-        }
-
-        // --- ACCOUNTS (Story 6-10) ---
-        async function loadAccounts(emailQuery = '') {
-            const res = await fetch(`${API}/accounts${emailQuery ? '?email='+emailQuery : ''}`, { headers: getHeaders() });
-            if(res.status === 401 || res.status === 403) window.location.href = 'index.html';
-            const data = await res.json();
-            
-            document.getElementById('accountsList').innerHTML = data.map(a => `
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center hover:shadow-md transition-all">
-                    <div class="flex items-center gap-4">
-                        <span class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded uppercase tracking-widest">ID: ${a.account_id}</span>
-                        <span class="font-bold text-slate-800">${a.email}</span>
-                        <span class="text-xs font-bold px-2 py-1 rounded ${a.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${a.status}</span>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="updateAccount(${a.account_id})" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-xl hover:bg-blue-100 transition-colors">Update Email</button>
-                        ${!a.is_suspended ? `<button onclick="suspendAccount(${a.account_id})" class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-2 rounded-xl hover:bg-rose-100 transition-colors">Suspend</button>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function createAccount() {
-            const email = document.getElementById('newAccEmail').value;
-            const password = document.getElementById('newAccPass').value;
-            const res = await fetch(`${API}/accounts`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify({email, password})
-            });
-            if(res.ok) { alert("Account Created!"); loadAccounts(); }
-            else { const err = await res.json(); alert(err.detail); }
-        }
-
-        async function updateAccount(id) {
-            const newEmail = prompt("Enter new email:");
-            if(!newEmail) return;
-            await fetch(`${API}/accounts/${id}?email=${encodeURIComponent(newEmail)}`, { method: 'PATCH', headers: getHeaders() });
-            loadAccounts();
-        }
-
-        async function suspendAccount(id) {
-            if(confirm("Suspend this account?")) {
-                await fetch(`${API}/accounts/${id}/suspend`, { method: 'POST', headers: getHeaders() });
-                loadAccounts();
-            }
-        }
-
-        // --- PROFILES (Story 1-5) ---
-        async function loadProfiles(nameQuery = '') {
-            const res = await fetch(`${API}/profiles${nameQuery ? '?username='+nameQuery : ''}`, { headers: getHeaders() });
-            const data = await res.json();
-            const roleNames = {0: "Admin", 1: "Donee", 2: "Fundraiser", 3: "Platform Manager"};
-            
-            document.getElementById('profilesList').innerHTML = data.map(p => `
-                <div class="bg-white p-5 rounded-3xl border border-slate-200 hover:border-slate-300 transition-all">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-black text-slate-900 text-lg">${p.username}</h3>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Profile ID: ${p.profile_id} | Acc: ${p.account_id}</p>
-                        </div>
-                        <span class="text-[10px] font-black bg-slate-900 text-white px-2 py-1 rounded uppercase tracking-widest">${roleNames[p.role_id]}</span>
-                    </div>
-                    <div class="flex gap-2 pt-4 border-t border-slate-50">
-                        <button onclick="viewProfile(${p.profile_id})" class="flex-1 text-xs font-bold text-slate-600 bg-slate-100 py-2 rounded-xl hover:bg-slate-200">View</button>
-                        <button onclick="updateProfile(${p.profile_id}, '${p.username}')" class="flex-1 text-xs font-bold text-blue-600 bg-blue-50 py-2 rounded-xl hover:bg-blue-100">Edit</button>
-                        <button onclick="suspendProfile(${p.profile_id})" class="flex-1 text-xs font-bold text-rose-600 bg-rose-50 py-2 rounded-xl hover:bg-rose-100">Suspend</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function createProfile() {
-            const account_id = parseInt(document.getElementById('newProfAccId').value);
-            const username = document.getElementById('newProfName').value;
-            const role_id = parseInt(document.getElementById('newProfRole').value);
-            const res = await fetch(`${API}/profiles`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify({account_id, username, role_id})
-            });
-            if(res.ok) { alert("Profile Linked!"); loadProfiles(); }
-            else { const err = await res.json(); alert(err.detail); }
-        }
-
-        async function viewProfile(id) {
-            const res = await fetch(`${API}/profiles/${id}`, { headers: getHeaders() });
-            const p = await res.json();
-            alert(`USER PROFILE\n\nName: ${p.username}\nRole ID: ${p.role_id}\nAccount ID: ${p.account_id}\nStatus: ${p.status}`);
-        }
-
-        async function updateProfile(id, oldName) {
-            const name = prompt("Update Username:", oldName);
-            if(!name) return;
-            await fetch(`${API}/profiles/${id}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({username: name}) });
-            loadProfiles();
-        }
-
-        async function suspendProfile(id) {
-            if(confirm("Suspend this profile?")) {
-                await fetch(`${API}/profiles/${id}/suspend`, { method: 'POST', headers: getHeaders() });
-                loadProfiles();
-            }
-        }
-    </script>
+    <script src="user_admin.js"></script>
 </body>
 </html>
