@@ -110,13 +110,17 @@ function renderActivityCards(activities, isFavoriteView) {
     document.getElementById('section-activities').innerHTML = activities.map(a => {
         const progress = Math.min((a.current_amount / a.target_amount) * 100, 100);
         return `
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl transition-all cursor-pointer group flex flex-col h-full" onclick="openModal(${a.activity_id})">
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col h-full">
             <div class="flex justify-between items-start mb-4">
-                <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded tracking-widest uppercase">Ongoing</span>
-                ${isFavoriteView ? `<span class="text-rose-500 text-xl" title="Saved to Favorites">❤️</span>` : ''}
+                <span class="${a.status === 'Ongoing' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'} text-[10px] font-black px-2 py-1 rounded tracking-widest uppercase">
+                    ${a.status || 'Unknown'}
+                </span>
+                ${isFavoriteView ? `<button onclick="event.stopPropagation(); removeFavorite(${a.activity_id})" class="text-rose-500 text-xl hover:scale-125 transition-transform" title="Remove from Favorites">❤️</button>` : ''}
             </div>
-            <h3 class="font-black text-xl text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors line-clamp-2">${a.title}</h3>
-            <p class="text-sm text-slate-500 line-clamp-2 mb-6 flex-1">${a.description}</p>
+            <div class="cursor-pointer flex-1" onclick="openModal(${a.activity_id})">
+                <h3 class="font-black text-xl text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors line-clamp-2">${a.title}</h3>
+                <p class="text-sm text-slate-500 line-clamp-2 mb-6 flex-1">${a.description}</p>
+            </div>
             <div class="mt-auto">
                 <div class="flex justify-between text-xs font-bold text-slate-800 mb-2">
                     <span class="text-emerald-600">$${a.current_amount.toFixed(2)} raised</span>
@@ -138,6 +142,12 @@ function renderActivityCards(activities, isFavoriteView) {
 async function openModal(id) {
     currentActivityId = id;
     const res = await fetch(`${API}/activities/${id}`, { headers: getHeaders() });
+    if (!res.ok) {
+        const errorData = await res.json();
+        showMessage("Unable to view activity", errorData.detail || "The activity is not available or has ended.", true);
+        return; // Terminate subsequent operations
+    }
+    
     const a = await res.json();
     
     document.getElementById('modalTitle').innerText = a.title;
@@ -168,6 +178,17 @@ async function toggleFavoriteFromModal() {
     showMessage("Favorites Updated", data.message);
     
     if(currentTab === 'favorites') loadFavorites();
+}
+
+// --- REMOVE FROM FAVORITES (Quick remove from Favorites view) ---
+async function removeFavorite(activityId) {
+    showConfirm("Remove Favorite", "Are you sure you want to remove this from your favorites?", async () => {
+        const res = await fetch(`${API}/favorites/${activityId}`, { method: 'POST', headers: getHeaders() });
+        const data = await res.json();
+        
+        showMessage("Removed", data.message);
+        if(currentTab === 'favorites') loadFavorites();
+    });
 }
 
 // --- MAKE A DONATION (Story 31) ---

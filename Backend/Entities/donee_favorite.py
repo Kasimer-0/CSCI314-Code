@@ -30,6 +30,25 @@ class FavoriteEntity:
             query = db.query(Bookmark).join(Activity).filter(Bookmark.user_id == profile_id)
             if title:
                 query = query.filter(Activity.title.ilike(f"%{title}%"))
-            return query.all(), None
+            bookmarks = query.all()
+            
+            # Convert to dictionary format that matches front-end expectations
+            result = []
+            for bookmark in bookmarks:
+                result.append({
+                    "bookmark_id": bookmark.bookmark_id,
+                    "activity": {
+                        "activity_id": bookmark.activity.activity_id,
+                        "title": bookmark.activity.title,
+                        "description": bookmark.activity.description,
+                        "target_amount": bookmark.activity.target_amount,
+                        "current_amount": bookmark.activity.current_amount,
+                        "status": bookmark.activity.status,
+                        "view_count": bookmark.activity.view_count,
+                        "is_private": bookmark.activity.is_private,
+                        "created_at": bookmark.activity.created_at.isoformat() if bookmark.activity.created_at else None
+                    }
+                })
+            return result, None
         finally:
             db.close()

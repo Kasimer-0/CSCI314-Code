@@ -111,7 +111,35 @@ def seed_database():
         db.commit()
 
         print("\n🎉 Success! All tables have been successfully populated with at least 100 records that perfectly satisfy foreign key constraints!")
-        print("💡 Test Login Tips: You can use pgAdmin to view the generated user emails, all passwords are: password123")
+        print("\n" + "="*80)
+        print("📋 TEST ACCOUNT INFORMATION")
+        print("="*80)
+        
+        # Query and display test accounts by role
+        admin_accs = db.query(UserAccount).join(UserProfile).filter(UserProfile.role_id == 0).limit(3).all()
+        pm_accs = db.query(UserAccount).join(UserProfile).filter(UserProfile.role_id == 3).limit(3).all()
+        donee_accs = db.query(UserAccount).join(UserProfile).filter(UserProfile.role_id == 1).limit(3).all()
+        fundraiser_accs = db.query(UserAccount).join(UserProfile).filter(UserProfile.role_id == 2).limit(3).all()
+        
+        print("\n👨‍💼 USER ADMIN (role_id: 0)")
+        for acc in admin_accs:
+            print(f"   Email: {acc.email} | Password: password123")
+        
+        print("\n📊 PLATFORM MANAGER (role_id: 3)")
+        for acc in pm_accs:
+            print(f"   Email: {acc.email} | Password: password123")
+        
+        print("\n💚 DONEE (role_id: 1)")
+        for acc in donee_accs:
+            print(f"   Email: {acc.email} | Password: password123")
+        
+        print("\n✨ FUNDRAISER (role_id: 2)")
+        for acc in fundraiser_accs:
+            print(f"   Email: {acc.email} | Password: password123")
+        
+        print("\n" + "="*80)
+        print("💡 All passwords are: password123")
+        print("="*80 + "\n")
 
     except Exception as e:
         print(f"❌ Error occurred while inserting data: {e}")

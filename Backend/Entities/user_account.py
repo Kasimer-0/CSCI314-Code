@@ -4,10 +4,10 @@ from typing import Optional
 from sqlalchemy.orm import Session
 import bcrypt
 from models import UserAccount 
-from dependencies import get_db
 import jwt
 from datetime import timedelta
-from dependencies import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from dependencies import get_db, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+
 
 # ==========================================
 # 1. Pydantic Models (Data Validation)
@@ -37,6 +37,7 @@ class UserAccountEntity:
     @staticmethod
     def login_admin(login_data):
         """Entity Logic (Story 11): Login admin and issue JWT"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()       
@@ -75,6 +76,7 @@ class UserAccountEntity:
     @staticmethod
     def create_account(account_data: UserAccountCreate):
         """Entity Logic (Story 6): Insert new account into database"""
+        
         db: Session = next(get_db())
         try:
             existing = db.query(UserAccount).filter(UserAccount.email == account_data.email).first()
@@ -101,6 +103,7 @@ class UserAccountEntity:
     @staticmethod
     def get_account(account_id: int):
         """Entity Logic (Story 7): Get single user account safely"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.account_id == account_id).first()
@@ -118,6 +121,7 @@ class UserAccountEntity:
     @staticmethod
     def update_account(account_id: int, new_email: str):
         """Entity Logic (Story 8): Update user email"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.account_id == account_id).first()
@@ -134,6 +138,7 @@ class UserAccountEntity:
     @staticmethod
     def suspend_account(account_id: int):
         """Entity Logic (Story 9): Suspend user account"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.account_id == account_id).first()
@@ -151,6 +156,7 @@ class UserAccountEntity:
     @staticmethod
     def search_accounts(email_query: Optional[str]):
         """Entity Logic (Story 10): Search user accounts"""
+        
         db: Session = next(get_db())
         try:
             query = db.query(UserAccount)
@@ -163,6 +169,7 @@ class UserAccountEntity:
     @staticmethod
     def get_user_by_email_for_auth(email: str):
         """Entity Logic: Helper for Token validation in dependencies"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.email == email).first()
@@ -173,6 +180,7 @@ class UserAccountEntity:
     @staticmethod
     def login_fundraiser(login_data):
         """Entity Logic (Story 18): Fundraiser Login"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()
@@ -194,13 +202,9 @@ class UserAccountEntity:
             db.close()
 
     @staticmethod
-    def logout_fundraiser():
-        """Entity Logic (Story 19): Fundraiser Logout"""
-        return {"message": "Successfully logged out. Please discard your token."}, None
-
-    @staticmethod
     def login_donee(login_data):
         """Entity Logic (Story 29): Donee Login"""
+        
         db: Session = next(get_db())
         try:
             account = db.query(UserAccount).filter(UserAccount.email == login_data.email).first()
@@ -229,6 +233,7 @@ class UserAccountEntity:
     @staticmethod
     def login_manager(login_data):
         """Entity Logic (Story 38): Platform Manager Login"""
+        
         db: Session = next(get_db())
         try:
             # 1. Search Account
