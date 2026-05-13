@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
-from models import Activity
-from dependencies import get_db
+from Entities.fundraising_activity import Activity
+from database import get_db
 
 class DoneeActivityEntity:
     @staticmethod

@@ -3,7 +3,12 @@ import random
 from faker import Faker
 import bcrypt
 from database import SessionLocal, engine, Base
-from models import UserAccount, UserProfile, Category, Activity, Donation, Bookmark
+from Entities.user_account import UserAccount
+from Entities.user_profile import UserProfile
+from Entities.platform_category import Category
+from Entities.fundraising_activity import Activity
+from Entities.donation import Donation
+from Entities.donee_favorite import Bookmark
 
 # Initialize Faker for generating fake data
 fake = Faker('en_US') # Change to Faker('zh_CN') if you want Chinese data
@@ -44,8 +49,8 @@ def seed_database():
             # 2. Create associated Profile
             prof = UserProfile(
                 account_id=acc.account_id,
-                username=fake.user_name(),
-                phone_number=fake.phone_number(),
+                profile_name=fake.name(),                   # Generate a random name
+                profile_description=fake.sentence(),        # Generate a random profile description
                 role_id=role_id
             )
             db.add(prof)

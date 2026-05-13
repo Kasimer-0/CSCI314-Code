@@ -5,8 +5,8 @@ from pydantic import BaseModel, EmailStr
 from dependencies import get_fundraiser
 
 # Import the two split Entities
-from Entities.user_account import UserAccountEntity
-from Entities.fundraising_activity import FundraisingActivityEntity, ActivityCreate
+from Entities.user_account import UserAccount
+from Entities.fundraising_activity import Activity, ActivityCreate
 
 router = APIRouter(prefix="/fundraiser", tags=["Fundraiser Controller (BCE Class Mode)"])
 
@@ -23,7 +23,7 @@ class LoginFundraiserController:
     def execute(self, login_data: FundraiserLoginRequest):
         """Story 18: Login to my account"""
         # Call the Account Entity to handle login.
-        token_response, error = UserAccountEntity.login_fundraiser(login_data)
+        token_response, error = UserAccount.login_fundraiser(login_data)
         if error:
             status_code = 401 if "Incorrect" in error else 403
             raise HTTPException(status_code=status_code, detail=error)
@@ -33,14 +33,14 @@ class LogoutFundraiserController:
     def execute(self):
         """Story 19: Logout of my account"""
         # Call the Account Entity to handle logout
-        result, _ = UserAccountEntity.logout_fundraiser()
+        result, _ = UserAccount.logout_fundraiser()
         return result
 
 class CreateFundraisingActivityController:
     def execute(self, activity_data: ActivityCreate, profile_id: int):
         """Story 13: Create a fundraising activity"""
         # Call the Activity Entity to handle the activity creation
-        activity, error = FundraisingActivityEntity.create_activity(activity_data, profile_id)
+        activity, error = Activity.create_activity(activity_data, profile_id)
         if error:
             raise HTTPException(status_code=500, detail=error)
         return activity
@@ -48,7 +48,7 @@ class CreateFundraisingActivityController:
 class ViewFundraisingActivityController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 14: View my fundraising activity"""
-        activity, error = FundraisingActivityEntity.get_activity(activity_id, profile_id)
+        activity, error = Activity.get_activity(activity_id, profile_id)
         if error:
             raise HTTPException(status_code=404, detail=error)
         return activity
@@ -56,7 +56,7 @@ class ViewFundraisingActivityController:
 class UpdateFundraisingActivityController:
     def execute(self, activity_id: int, title: str, profile_id: int):
         """Story 15: Update my fundraising activity"""
-        activity, error = FundraisingActivityEntity.update_activity(activity_id, title, profile_id)
+        activity, error = Activity.update_activity(activity_id, title, profile_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return activity
@@ -64,7 +64,7 @@ class UpdateFundraisingActivityController:
 class SuspendFundraisingActivityController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 16: Suspend fundraising activity"""
-        activity, error = FundraisingActivityEntity.suspend_activity(activity_id, profile_id)
+        activity, error = Activity.suspend_activity(activity_id, profile_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {"message": "Activity suspended successfully.", "activity": activity}
@@ -72,7 +72,7 @@ class SuspendFundraisingActivityController:
 class SearchFundraisingActivitiesController:
     def execute(self, title: Optional[str], profile_id: int):
         """Story 17: Search for fundraising activities"""
-        activities, error = FundraisingActivityEntity.search_activities(title, profile_id)
+        activities, error = Activity.search_activities(title, profile_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return activities
@@ -80,7 +80,7 @@ class SearchFundraisingActivitiesController:
 class TrackActivityViewsController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 20: Track the number of views"""
-        stats, error = FundraisingActivityEntity.get_activity_views(activity_id, profile_id)
+        stats, error = Activity.get_activity_views(activity_id, profile_id)
         if error:
             raise HTTPException(status_code=404, detail=error)
         return stats
@@ -88,7 +88,7 @@ class TrackActivityViewsController:
 class TrackActivityShortlistsController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 21: Track the number of shortlists"""
-        stats, error = FundraisingActivityEntity.get_activity_shortlists(activity_id, profile_id)
+        stats, error = Activity.get_activity_shortlists(activity_id, profile_id)
         if error:
             raise HTTPException(status_code=404, detail=error)
         return stats
@@ -96,7 +96,7 @@ class TrackActivityShortlistsController:
 class SearchPastActivitiesController:
     def execute(self, title: Optional[str], profile_id: int):
         """Story 22: Search for the history of past fundraising activities"""
-        history, error = FundraisingActivityEntity.search_history(title, profile_id)
+        history, error = Activity.search_history(title, profile_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return history
@@ -104,7 +104,7 @@ class SearchPastActivitiesController:
 class ViewPastActivityController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 23: View past fundraising activity"""
-        activity, error = FundraisingActivityEntity.get_activity(activity_id, profile_id)
+        activity, error = Activity.get_activity(activity_id, profile_id)
         # History records include Closed and Suspended states.
         if error or activity.status not in ["Closed", "Suspended"]:
             raise HTTPException(status_code=404, detail="No such historical activity was found.")
@@ -173,8 +173,8 @@ def route_view_past_activity(activity_id: int, fr_user=Depends(get_fundraiser)):
 def route_get_activity_stats(activity_id: int, fr_user=Depends(get_fundraiser)):
     """API for Story 24"""
     # Can combine existing logic from within an Entity.
-    views, _ = FundraisingActivityEntity.get_activity_views(activity_id, fr_user.profile.profile_id)
-    shortlists, _ = FundraisingActivityEntity.get_activity_shortlists(activity_id, fr_user.profile.profile_id)
+    views, _ = Activity.get_activity_views(activity_id, fr_user.profile.profile_id)
+    shortlists, _ = Activity.get_activity_shortlists(activity_id, fr_user.profile.profile_id)
     return {
         "title": views["title"],
         "views": views["views"],

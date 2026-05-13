@@ -1,105 +1,109 @@
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import Session, relationship
 from pydantic import BaseModel
 from typing import Optional
-from sqlalchemy.orm import Session
-from models import UserProfile, UserAccount
-from dependencies import get_db
+
+# 从基础配置导入
+from database import Base, get_db
 
 # ==========================================
 # 1. Pydantic Models (Data Validation)
 # ==========================================
-class UserProfileCreate(BaseModel):
+class ProfileCreate(BaseModel):
     account_id: int
-    username: str
-    phone_number: Optional[str] = None
+    profile_name: str
+    profile_description: Optional[str] = None
     role_id: int
 
-class UserProfileUpdate(BaseModel):
-    username: Optional[str] = None
-    phone_number: Optional[str] = None
-    role_id: Optional[int] = None
+class ProfileUpdate(BaseModel):
+    profile_description: str
 
 # ==========================================
-# 2. Entity Class (Business Logic & Database)
+# 2. BCE Entity: UserProfile
 # ==========================================
-class UserProfileEntity:
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
 
-    @staticmethod
-    def create_profile(profile_data: UserProfileCreate):
-        """Entity Logic (Story 1): Link profile data to an existing account"""
+    # --- State: Database table field ---
+    profile_id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("user_accounts.account_id"))
+    profile_name = Column(String, index=True) 
+    profile_description = Column(String, nullable=True)
+    role_id = Column(Integer)
+    status = Column(String, default="Active")
+    is_suspended = Column(Boolean, default=False)
+
+    # Establish a reverse association with Account
+    account = relationship("UserAccount", back_populates="profile")
+
+    activities = relationship("Activity", back_populates="creator")
+    donations = relationship("Donation", back_populates="donee_profile")
+    bookmarks = relationship("Bookmark", back_populates="user_profile")
+
+    # --- Behavior: Business logic methods ---
+
+    @classmethod
+    def create_profile(cls, prof_data: ProfileCreate):
+        """Entity Logic (Story 1): Create Profile"""
         db: Session = next(get_db())
         try:
-            account = db.query(UserAccount).filter(UserAccount.account_id == profile_data.account_id).first()
-            if not account:
-                return None, "User account not found. Please create an account first."
-            
-            existing_profile = db.query(UserProfile).filter(UserProfile.account_id == profile_data.account_id).first()
-            if existing_profile:
-                return None, "Profile already exists for this account."
-
-            new_profile = UserProfile(
-                account_id=profile_data.account_id,
-                username=profile_data.username,
-                phone_number=profile_data.phone_number,
-                role_id=profile_data.role_id
+            new_profile = cls(
+                account_id=prof_data.account_id,
+                profile_name=prof_data.profile_name,
+                profile_description=prof_data.profile_description,
+                role_id=prof_data.role_id
             )
             db.add(new_profile)
-            
-            account.status = "Active"
-            
             db.commit()
             db.refresh(new_profile)
             return new_profile, None
+        except Exception as e:
+            return None, str(e)
         finally:
             db.close()
 
-    @staticmethod
-    def get_profile(profile_id: int):
+    @classmethod
+    def get_profile(cls, profile_id: int):
         """Entity Logic (Story 2): Get single user profile safely"""
         db: Session = next(get_db())
         try:
-            profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
+            profile = db.query(cls).filter(cls.profile_id == profile_id).first()
             if not profile:
                 return None, "User profile not found."
 
             return {
                 "profile_id": profile.profile_id,
                 "account_id": profile.account_id,
-                "username": profile.username,
-                "phone_number": profile.phone_number,
+                "profile_name": profile.profile_name,
+                "profile_description": profile.profile_description,
                 "role_id": profile.role_id,
-                "status": getattr(profile, 'status', 'Active')
+                "status": profile.status
             }, None
         finally:
             db.close()
 
-    @staticmethod
-    def update_profile(profile_id: int, update_data: UserProfileUpdate):
-        """Entity Logic (Story 3): Update user profile"""
+    @classmethod
+    def update_profile(cls, profile_id: int, prof_data: ProfileUpdate):
+        """Entity Logic (Story 3): Update Profile Description"""
         db: Session = next(get_db())
         try:
-            profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
+            profile = db.query(cls).filter(cls.profile_id == profile_id).first()
             if not profile:
-                return None, "User profile not found."
-
-            if update_data.username is not None:
-                profile.username = update_data.username
-            if update_data.phone_number is not None:
-                profile.phone_number = update_data.phone_number
-            if update_data.role_id is not None:
-                profile.role_id = update_data.role_id
-
+                return None, "Profile not found."
+            
+            profile.profile_description = prof_data.profile_description
             db.commit()
             db.refresh(profile)
             return profile, None
         finally:
             db.close()
 
-    @staticmethod
-    def suspend_profile(profile_id: int):
-        """Entity Logic (Story 4): Suspend user profile independently"""
+    @classmethod
+    def suspend_profile(cls, profile_id: int):
+        """Entity Logic (Story 4): Suspend user profile"""
         db: Session = next(get_db())
         try:
-            profile = db.query(UserProfile).filter(UserProfile.profile_id == profile_id).first()
+            profile = db.query(cls).filter(cls.profile_id == profile_id).first()
             if not profile:
                 return None, "User profile not found."
 
@@ -112,27 +116,14 @@ class UserProfileEntity:
         finally:
             db.close()
 
-    @staticmethod
-    def search_profiles(username_query: Optional[str]):
-        """Entity Logic (Story 5): Search user profiles"""
+    @classmethod
+    def search_profiles(cls, profile_name: Optional[str] = None):
+        """Story 5: Search Profile (By profile_name)"""
         db: Session = next(get_db())
         try:
-            query = db.query(UserProfile)
-            if username_query:
-                query = query.filter(UserProfile.username.ilike(f"%{username_query}%"))
-            
-            profiles = query.all()
-            result = []
-            for p in profiles:
-                result.append({
-                    "profile_id": p.profile_id,
-                    "account_id": p.account_id,
-                    "username": p.username,
-                    "phone_number": p.phone_number,
-                    "role_id": p.role_id,
-                    "status": getattr(p, 'status', 'Active'),
-                    "is_suspended": getattr(p, 'is_suspended', False)
-                })
-            return result, None
+            query = db.query(cls)
+            if profile_name:
+                query = query.filter(cls.profile_name.ilike(f"%{profile_name}%"))
+            return query.all(), None
         finally:
             db.close()

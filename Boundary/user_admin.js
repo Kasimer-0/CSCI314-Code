@@ -169,22 +169,23 @@ async function suspendAccount(id) {
 
 // --- SEARCH PROFILES (Story 5) ---
 async function loadProfiles(nameQuery = '') {
-    const res = await fetch(`${API}/profiles${nameQuery ? '?username='+nameQuery : ''}`, { headers: getHeaders() });
+    const res = await fetch(`${API}/profiles${nameQuery ? '?profile_name='+nameQuery : ''}`, { headers: getHeaders() });
     const data = await res.json();
     const roleNames = {0: "Admin", 1: "Donee", 2: "Fundraiser", 3: "Platform Manager"};
     
     document.getElementById('profilesList').innerHTML = data.map(p => `
         <div class="bg-white p-5 rounded-3xl border border-slate-200 hover:border-slate-300 transition-all">
-            <div class="flex justify-between items-start mb-4">
+            <div class="flex justify-between items-start mb-2">
                 <div>
-                    <h3 class="font-black text-slate-900 text-lg">${p.username}</h3>
+                    <h3 class="font-black text-slate-900 text-lg">${p.profile_name}</h3>
                     <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Profile ID: ${p.profile_id} | Acc: ${p.account_id}</p>
                 </div>
                 <span class="text-[10px] font-black bg-slate-900 text-white px-2 py-1 rounded uppercase tracking-widest">${roleNames[p.role_id]}</span>
             </div>
+            <p class="text-sm text-slate-500 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">${p.profile_description || 'No description provided.'}</p>
             <div class="flex gap-2 pt-4 border-t border-slate-50">
                 <button onclick="viewProfile(${p.profile_id})" class="flex-1 text-xs font-bold text-slate-600 bg-slate-100 py-2 rounded-xl hover:bg-slate-200">View</button>
-                <button onclick="updateProfile(${p.profile_id}, '${p.username}')" class="flex-1 text-xs font-bold text-blue-600 bg-blue-50 py-2 rounded-xl hover:bg-blue-100">Edit</button>
+                <button onclick="updateProfile(${p.profile_id}, '${p.profile_description || ''}')" class="flex-1 text-xs font-bold text-blue-600 bg-blue-50 py-2 rounded-xl hover:bg-blue-100">Edit Desc</button>
                 <button onclick="suspendProfile(${p.profile_id})" class="flex-1 text-xs font-bold text-rose-600 bg-rose-50 py-2 rounded-xl hover:bg-rose-100">Suspend</button>
             </div>
         </div>
@@ -194,24 +195,27 @@ async function loadProfiles(nameQuery = '') {
 // --- CREATE PROFILE (Story 1) ---
 async function createProfile() {
     const account_id = parseInt(document.getElementById('newProfAccId').value);
-    const username = document.getElementById('newProfName').value;
+    const profile_name = document.getElementById('newProfName').value;
+    const profile_description = document.getElementById('newProfDesc').value; // Get the description
     const role_id = parseInt(document.getElementById('newProfRole').value);
     
-    if(!account_id || !username) {
-        return showMessage("Missing Fields", "Please fill all required profile fields.", true);
+    if(!account_id || !profile_name) {
+        return showMessage("Missing Fields", "Please provide Account ID and Profile Name.", true);
     }
 
     const res = await fetch(`${API}/profiles`, {
-        method: 'POST', headers: getHeaders(), body: JSON.stringify({account_id, username, role_id})
+        method: 'POST', headers: getHeaders(), 
+        // Passing new fields
+        body: JSON.stringify({account_id, profile_name, profile_description, role_id})
     });
     
     if(res.ok) { 
         showMessage("Success", "Profile linked to account successfully!"); 
         document.getElementById('newProfAccId').value = '';
         document.getElementById('newProfName').value = '';
+        document.getElementById('newProfDesc').value = '';
         loadProfiles(); 
-    }
-    else { 
+    } else { 
         const err = await res.json(); 
         showMessage("Failed", err.detail || "Cannot link profile", true); 
     }
@@ -224,15 +228,15 @@ async function viewProfile(id) {
     const roleNames = {0: "Admin", 1: "Donee", 2: "Fundraiser", 3: "Platform Manager"};
     
     document.getElementById('detailLabel').innerText = roleNames[p.role_id];
-    document.getElementById('detailMainTitle').innerText = p.username;
+    document.getElementById('detailMainTitle').innerText = p.profile_name; // change to profile_name
     document.getElementById('detailContent').innerHTML = `
         <div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
             <strong class="text-slate-500 text-sm">Account ID</strong> 
             <span class="font-bold">${p.account_id}</span>
         </div>
-        <div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-            <strong class="text-slate-500 text-sm">Profile ID</strong> 
-            <span class="font-bold">${p.profile_id}</span>
+        <div class="flex justify-between items-start py-2 border-b border-slate-100 last:border-0">
+            <strong class="text-slate-500 text-sm">Description</strong> 
+            <span class="font-medium text-slate-700 text-right w-2/3">${p.profile_description || 'N/A'}</span>
         </div>
         <div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
             <strong class="text-slate-500 text-sm">Status</strong> 
@@ -243,16 +247,22 @@ async function viewProfile(id) {
 }
 
 // --- UPDATE PROFILE (Story 3) ---
-async function updateProfile(id, oldName) {
-    showPrompt("Edit Username", "Update the display name for this user:", oldName, async (name) => {
-        if(!name) return;
-        const res = await fetch(`${API}/profiles/${id}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({username: name}) });
+async function updateProfile(id, oldDesc) {
+    // A pop-up window prompts you to modify profile_description
+    showPrompt("Edit Description", "Update the description for this profile:", oldDesc, async (desc) => {
+        if(!desc) return;
+        const res = await fetch(`${API}/profiles/${id}`, { 
+            method: 'PATCH', 
+            headers: getHeaders(), 
+            // Submit changes description
+            body: JSON.stringify({ profile_description: desc }) 
+        });
         if(res.ok) {
-            showMessage("Updated", "Username has been updated.");
+            showMessage("Updated", "Profile description has been updated.");
             loadProfiles();
         } else {
             const err = await res.json();
-            showMessage("Update Failed", err.detail || "Cannot update username", true);
+            showMessage("Update Failed", err.detail || "Cannot update profile.", true);
         }
     });
 }

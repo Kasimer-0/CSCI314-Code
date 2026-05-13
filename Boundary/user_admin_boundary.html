@@ -111,14 +111,18 @@
             </div>
 
             <div id="section-profiles" class="hidden">
-                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8 grid grid-cols-4 gap-4 items-end">
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-8 grid grid-cols-5 gap-4 items-end">
                     <div>
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Account ID</label>
                         <input type="number" id="newProfAccId" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900" placeholder="e.g. 15">
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Username</label>
-                        <input type="text" id="newProfName" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900" placeholder="Full Name">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Profile Name</label>
+                        <input type="text" id="newProfName" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900" placeholder="Name">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Description</label>
+                        <input type="text" id="newProfDesc" class="w-full mt-1 px-3 py-2 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-slate-900" placeholder="Profile bio...">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
@@ -129,7 +133,7 @@
                             <option value="0">0 - Admin</option>
                         </select>
                     </div>
-                    <button onclick="createProfile()" class="bg-slate-900 text-white font-bold px-4 py-2 rounded-xl hover:bg-slate-800 h-[42px] shadow-lg transition-all active:scale-95">Link Profile</button>
+                    <button onclick="createProfile()" class="col-span-5 bg-slate-900 text-white font-bold px-4 py-3 rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95">Link New Profile</button>
                 </div>
                 <div id="profilesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>

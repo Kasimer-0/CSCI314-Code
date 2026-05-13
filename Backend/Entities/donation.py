@@ -1,24 +1,52 @@
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
+from sqlalchemy.orm import Session, relationship
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import Optional
-from sqlalchemy.orm import Session
-from models import Donation, Activity
-from dependencies import get_db
+from database import Base, get_db
 
+from Entities.fundraising_activity import Activity
+
+# ==========================================
+# 1. Pydantic Models (Data Validation)
+# ==========================================
 class DonationRequest(BaseModel):
     amount: float = Field(..., gt=0)
     message: Optional[str] = None
     anonymous: bool = False
 
-class DonationEntity:
-    @staticmethod
-    def donate_to_activity(activity_id: int, profile_id: int, donation_data: DonationRequest):
+# ==========================================
+# 2. BCE Entity: Donation
+# ==========================================
+class Donation(Base):
+    __tablename__ = "donations"
+
+    # --- State: Database table field ---
+    donation_id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.activity_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user_profiles.profile_id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    message = Column(String, nullable=True)
+    is_anonymous = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationship
+    donee_profile = relationship("UserProfile", back_populates="donations")
+    activity = relationship("Activity", back_populates="donations")
+
+    # --- Behavior: Business logic methods ---
+    @classmethod
+    def donate_to_activity(cls, activity_id: int, profile_id: int, donation_data: DonationRequest):
         """Entity Logic: Make a donation"""
         db: Session = next(get_db())
         try:
+            # Importing here to avoid circular imports, as Activity also imports Donation.
+            from Entities.fundraising_activity import Activity
+
             activity = db.query(Activity).filter(Activity.activity_id == activity_id, Activity.status == "Ongoing").first()
             if not activity: return None, "Activity not available for donation."
             
-            new_donation = Donation(
+            new_donation = cls(
                 activity_id=activity_id,
                 user_id=profile_id,
                 amount=donation_data.amount,
@@ -26,18 +54,20 @@ class DonationEntity:
                 is_anonymous=donation_data.anonymous
             )
             db.add(new_donation)
+            
+            # Synchronize and update the total amount raised in the Activity
             activity.current_amount += donation_data.amount
             db.commit()
             return {"message": "Donation successful!"}, None
         finally:
             db.close()
 
-    @staticmethod
-    def search_past_donations(profile_id: int, title: Optional[str]):
+    @classmethod
+    def search_past_donations(cls, profile_id: int, title: Optional[str]):
         """Entity Logic (Story 31): Search past donations"""
         db: Session = next(get_db())
         try:
-            donations = db.query(Donation).filter(Donation.user_id == profile_id).order_by(Donation.created_at.desc()).all()
+            donations = db.query(cls).filter(cls.user_id == profile_id).order_by(cls.created_at.desc()).all()
             result = []
             for d in donations:
                 activity_title = d.activity.title if d.activity else "Unknown Activity"
@@ -52,12 +82,12 @@ class DonationEntity:
         finally:
             db.close()
 
-    @staticmethod
-    def view_past_donation_detail(donation_id: int, profile_id: int):
+    @classmethod
+    def view_past_donation_detail(cls, donation_id: int, profile_id: int):
         """Entity Logic (Story 32): View past donation"""
         db: Session = next(get_db())
         try:
-            donation = db.query(Donation).filter(Donation.donation_id == donation_id, Donation.user_id == profile_id).first()
+            donation = db.query(cls).filter(cls.donation_id == donation_id, cls.user_id == profile_id).first()
             if not donation: return None, "Donation record not found."
             return {
                 "donation_id": donation.donation_id,

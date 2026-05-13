@@ -5,15 +5,11 @@ from pydantic import BaseModel, EmailStr
 # Import role authentication dependencies
 from dependencies import get_user_admin
 
-# Import Entities (these Entity classes have already handled Supabase/Database connections)
-from Entities.user_account import UserAccountEntity, UserAccountCreate
-from Entities.user_profile import UserProfileEntity, UserProfileCreate, UserProfileUpdate
+# Import Entities (These handle the DB logic)
+from Entities.user_account import UserAccount, UserAccountCreate
+from Entities.user_profile import UserProfile, ProfileCreate, ProfileUpdate
 
 router = APIRouter(prefix="/user-admin", tags=["User Admin Controller (BCE Class Mode)"])
-
-# Temporary request model
-class EmailUpdate(BaseModel):
-    new_email: EmailStr
 
 class AdminLoginRequest(BaseModel):
     email: EmailStr
@@ -24,43 +20,43 @@ class AdminLoginRequest(BaseModel):
 # =======================================
 
 class CreateUserProfileController:
-    def execute(self, profile_data: UserProfileCreate):
+    def execute(self, profile_data: ProfileCreate):
         """Story 1: Create a user profile"""
-        profile, error = UserProfileEntity.create_profile(profile_data)
+        profile, error = UserProfile.create_profile(profile_data)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {"message": "Profile created successfully.", "profile": profile}
 
 class ViewUserProfileController:
-    def execute(self, user_id: int):
+    def execute(self, profile_id: int):
         """Story 2: View user profile"""
-        profile, error = UserProfileEntity.get_profile(user_id)
+        profile, error = UserProfile.get_profile(profile_id)
         if error:
             raise HTTPException(status_code=404, detail=error)
         return profile
 
-class UpdateUserProfileController:
-    def execute(self, user_id: int, update_data: UserProfileUpdate):
-        """Story 3: Update user profile"""
-        profile, error = UserProfileEntity.update_profile(user_id, update_data)
+class UpdateProfileController:
+    def execute(self, profile_id: int, prof_data: ProfileUpdate):
+        """Story 3: Update profile description"""
+        profile, error = UserProfile.update_profile(profile_id, prof_data)
         if error:
-            raise HTTPException(status_code=400, detail=error)
-        return {"message": "Profile updated.", "profile": profile}
+            raise HTTPException(status_code=404, detail=error)
+        return profile
 
 class SuspendUserProfileController:
-    def execute(self, user_id: int):
+    def execute(self, profile_id: int):
         """Story 4: Suspend user profile"""
-        profile, error = UserProfileEntity.suspend_profile(user_id)
+        profile, error = UserProfile.suspend_profile(profile_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {"message": "Profile suspended successfully"}
 
-class SearchUserProfileController:
-    def execute(self, username: Optional[str]):
-        """Story 5: Search user profiles"""
-        profiles, error = UserProfileEntity.search_profiles(username)
+class SearchProfilesController:
+    def execute(self, profile_name: Optional[str]):
+        """Story 5: Search profiles by profile_name"""
+        profiles, error = UserProfile.search_profiles(profile_name)
         if error:
-            raise HTTPException(status_code=500, detail=error)
+            raise HTTPException(status_code=400, detail=error)
         return profiles
 
 # =======================================
@@ -69,7 +65,7 @@ class SearchUserProfileController:
 class CreateUserAccountController:
     def execute(self, account_data: UserAccountCreate):
         """Story 6: Create a user account"""
-        account, error = UserAccountEntity.create_account(account_data)
+        account, error = UserAccount.create_account(account_data)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {
@@ -79,25 +75,25 @@ class CreateUserAccountController:
         }
 
 class ViewUserAccountController:
-    def execute(self, user_id: int):
+    def execute(self, account_id: int):
         """Story 7: View user account"""
-        account, error = UserAccountEntity.get_account(user_id)
+        account, error = UserAccount.get_account(account_id)
         if error:
             raise HTTPException(status_code=404, detail=error)
         return account
 
 class UpdateUserAccountController:
-    def execute(self, user_id: int, new_email: str):
+    def execute(self, account_id: int, new_email: str):
         """Story 8: Update user account"""
-        account, error = UserAccountEntity.update_account(user_id, new_email)
+        account, error = UserAccount.update_account(account_id, new_email)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {"message": "Account updated.", "account": account}
 
 class SuspendUserAccountController:
-    def execute(self, user_id: int):
+    def execute(self, account_id: int):
         """Story 9: Suspend user account"""
-        account, error = UserAccountEntity.suspend_account(user_id)
+        account, error = UserAccount.suspend_account(account_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {"message": "Account suspended.", "account": account}
@@ -105,7 +101,7 @@ class SuspendUserAccountController:
 class SearchUserAccountController:
     def execute(self, email: Optional[str]):
         """Story 10: Search user accounts"""
-        accounts, error = UserAccountEntity.search_accounts(email)
+        accounts, error = UserAccount.search_accounts(email)
         if error:
             raise HTTPException(status_code=500, detail=error)
         return accounts
@@ -116,7 +112,7 @@ class SearchUserAccountController:
 class AdminLoginController:
     def execute(self, login_data: AdminLoginRequest):
         """Story 11: Login to my user admin account"""
-        token_response, error = UserAccountEntity.login_admin(login_data)
+        token_response, error = UserAccount.login_admin(login_data)
         if error:
             status_code = 401 if "Incorrect" in error else 403
             raise HTTPException(status_code=status_code, detail=error)
@@ -125,8 +121,7 @@ class AdminLoginController:
 class LogoutUserAdminController:
     def execute(self):
         """Story 12: Logout of my user admin account"""
-        # Call Entity Logic
-        result, error = UserAccountEntity.logout_admin()
+        result, error = UserAccount.logout_admin()
         if error:
             raise HTTPException(status_code=400, detail=error)
         return result
@@ -138,29 +133,29 @@ class LogoutUserAdminController:
 
 # --- Profiles ---
 @router.post("/profiles")
-def route_create_profile(data: UserProfileCreate, admin=Depends(get_user_admin)):
+def route_create_profile(data: ProfileCreate, admin=Depends(get_user_admin)):
     """API for Story 1"""
     return CreateUserProfileController().execute(data)
 
-@router.get("/profiles/{user_id}")
-def route_view_profile(user_id: int, admin=Depends(get_user_admin)):
+@router.get("/profiles/{profile_id}")
+def route_view_profile(profile_id: int, admin=Depends(get_user_admin)):
     """API for Story 2"""
-    return ViewUserProfileController().execute(user_id)
+    return ViewUserProfileController().execute(profile_id)
 
-@router.patch("/profiles/{user_id}")
-def route_update_profile(user_id: int, data: UserProfileUpdate, admin=Depends(get_user_admin)):
+@router.patch("/profiles/{profile_id}")
+def route_update_profile(profile_id: int, prof_data: ProfileUpdate, admin_user=Depends(get_user_admin)):
     """API for Story 3"""
-    return UpdateUserProfileController().execute(user_id, data)
+    return UpdateProfileController().execute(profile_id, prof_data)
 
-@router.post("/profiles/{user_id}/suspend")
-def route_suspend_profile(user_id: int, admin=Depends(get_user_admin)):
+@router.post("/profiles/{profile_id}/suspend")
+def route_suspend_profile(profile_id: int, admin=Depends(get_user_admin)):
     """API for Story 4"""
-    return SuspendUserProfileController().execute(user_id)
+    return SuspendUserProfileController().execute(profile_id)
 
 @router.get("/profiles")
-def route_search_profiles(username: Optional[str] = Query(None), admin=Depends(get_user_admin)):
+def route_search_profiles(profile_name: Optional[str] = Query(None), admin_user=Depends(get_user_admin)):
     """API for Story 5"""
-    return SearchUserProfileController().execute(username)
+    return SearchProfilesController().execute(profile_name)
 
 # --- Accounts ---
 @router.post("/login")
@@ -178,20 +173,20 @@ def route_create_account(data: UserAccountCreate, admin=Depends(get_user_admin))
     """API for Story 6"""
     return CreateUserAccountController().execute(data)
 
-@router.get("/accounts/{user_id}")
-def route_view_account(user_id: int, admin=Depends(get_user_admin)):
+@router.get("/accounts/{account_id}")
+def route_view_account(account_id: int, admin=Depends(get_user_admin)):
     """API for Story 7"""
-    return ViewUserAccountController().execute(user_id)
+    return ViewUserAccountController().execute(account_id)
 
-@router.patch("/accounts/{user_id}")
-def route_update_account(user_id: int, email: str = Query(...), admin=Depends(get_user_admin)):
+@router.patch("/accounts/{account_id}")
+def route_update_account(account_id: int, email: str = Query(...), admin=Depends(get_user_admin)):
     """API for Story 8"""
-    return UpdateUserAccountController().execute(user_id, email)
+    return UpdateUserAccountController().execute(account_id, email)
 
-@router.post("/accounts/{user_id}/suspend")
-def route_suspend_account(user_id: int, admin=Depends(get_user_admin)):
+@router.post("/accounts/{account_id}/suspend")
+def route_suspend_account(account_id: int, admin=Depends(get_user_admin)):
     """API for Story 9"""
-    return SuspendUserAccountController().execute(user_id)
+    return SuspendUserAccountController().execute(account_id)
 
 @router.get("/accounts")
 def route_search_accounts(email: Optional[str] = Query(None), admin=Depends(get_user_admin)):

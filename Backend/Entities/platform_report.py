@@ -1,8 +1,9 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from models import Activity, Donation
-from dependencies import get_db
+from Entities.donation import Donation
+from Entities.fundraising_activity import Activity
+from database import get_db
 
 class PlatformReportEntity:
     @staticmethod

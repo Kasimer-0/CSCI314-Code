@@ -1,25 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, EmailStr
 
 # Import role permissions and check dependencies
 from dependencies import get_platform_manager
 
 # Import the newly split Entities
-from Entities.platform_category import CategoryEntity, CategoryCreate, CategoryUpdate
+from Entities.platform_category import Category, CategoryCreate, CategoryUpdate
 from Entities.platform_report import PlatformReportEntity
-from Entities.user_account import UserAccountEntity # Used to manage login/logout logic
+from Entities.user_account import UserAccount # Used to manage login/logout logic
 router = APIRouter(prefix="/platform", tags=["Platform Manager Controller (BCE Class Mode)"])
 
 # ============================================================
 # --- 1. Authentication related Controllers (Story 38 - 39) ---
 # ============================================================
 
+class ManagerLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 class ManagerLoginController:
     def execute(self, login_data):
         """Story 38: Login to platform manager account"""
-        # Call the login logic in UserAccountEntity specifically designed for Manager
-        token_response, error = UserAccountEntity.login_manager(login_data)
+        # Call the login logic in UserAccount specifically designed for Manager
+        token_response, error = UserAccount.login_manager(login_data)
         if error:
             status_code = 401 if "Incorrect" in error else 403
             raise HTTPException(status_code=status_code, detail=error)
@@ -28,7 +33,7 @@ class ManagerLoginController:
 class ManagerLogoutController:
     def execute(self):
         """Story 39: Logout of my account"""
-        response, error = UserAccountEntity.logout_manager()
+        response, error = UserAccount.logout_manager()
         if error:
             raise HTTPException(status_code=500, detail=error)
         return response
@@ -41,7 +46,7 @@ class ManagerLogoutController:
 class CreateCategoryController:
     def execute(self, cat_data: CategoryCreate):
         """Story 33: Create fundraising activity category"""
-        category, error = CategoryEntity.create_category(cat_data)
+        category, error = Category.create_category(cat_data)
         if error:
             raise HTTPException(status_code=500, detail=error)
         return category
@@ -49,7 +54,7 @@ class CreateCategoryController:
 class ViewCategoryController:
     def execute(self, category_id: int):
         """Story 34: View fundraising activity category"""
-        category, error = CategoryEntity.get_category(category_id)
+        category, error = Category.get_category(category_id)
         if error:
             raise HTTPException(status_code=404, detail=error)
         return category
@@ -57,7 +62,7 @@ class ViewCategoryController:
 class UpdateCategoryController:
     def execute(self, category_id: int, cat_data: CategoryUpdate):
         """Story 35: Update fundraising activity category"""
-        category, error = CategoryEntity.update_category(category_id, cat_data)
+        category, error = Category.update_category(category_id, cat_data)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return category
@@ -65,7 +70,7 @@ class UpdateCategoryController:
 class SuspendCategoryController:
     def execute(self, category_id: int):
         """Story 36: Suspend fundraising activity category"""
-        success, error = CategoryEntity.suspend_category(category_id)
+        success, error = Category.suspend_category(category_id)
         if error:
             raise HTTPException(status_code=400, detail=error)
         return {"message": "Category suspended successfully."}
@@ -73,7 +78,7 @@ class SuspendCategoryController:
 class SearchCategoriesController:
     def execute(self, name: Optional[str]):
         """Story 37: Search for fundraising categories"""
-        categories, error = CategoryEntity.search_categories(name)
+        categories, error = Category.search_categories(name)
         if error:
             raise HTTPException(status_code=500, detail=error)
         return categories
@@ -119,7 +124,7 @@ class GenerateMonthlyReportController:
 # ============================================================
 
 @router.post("/login")
-def route_manager_login(login_data: dict): # Receive raw JSON for login
+def route_manager_login(login_data: ManagerLoginRequest): 
     """API for Story 38"""
     return ManagerLoginController().execute(login_data)
 

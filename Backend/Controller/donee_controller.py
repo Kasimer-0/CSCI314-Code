@@ -4,10 +4,10 @@ from pydantic import BaseModel, EmailStr
 
 from dependencies import get_donee
 # Import Entities (these Entity classes have already handled Supabase/Database connections)
-from Entities.user_account import UserAccountEntity
+from Entities.user_account import UserAccount
 from Entities.donee_activity import DoneeActivityEntity
-from Entities.donee_favorite import FavoriteEntity
-from Entities.donation import DonationEntity, DonationRequest
+from Entities.donee_favorite import Bookmark
+from Entities.donation import Donation, DonationRequest
 
 router = APIRouter(prefix="/donee", tags=["Donee Controller (BCE Class Mode)"])
 
@@ -22,7 +22,7 @@ class DoneeLoginRequest(BaseModel):
 class LoginDoneeController:
     def execute(self, login_data: DoneeLoginRequest):
         """Story 29: Login to my account"""
-        token_response, error = UserAccountEntity.login_donee(login_data)
+        token_response, error = UserAccount.login_donee(login_data)
         if error:
             status_code = 401 if "Incorrect" in error else 403
             raise HTTPException(status_code=status_code, detail=error)
@@ -31,7 +31,7 @@ class LoginDoneeController:
 class LogoutDoneeController:
     def execute(self):
         """Story 30: Logout of my account"""
-        result, _ = UserAccountEntity.logout_donee()
+        result, _ = UserAccount.logout_donee()
         return result
 
 class SearchActivitiesController:
@@ -51,35 +51,35 @@ class ViewActivityController:
 class ToggleFavoriteController:
     def execute(self, activity_id: int, profile_id: int):
         """Story 26: Save/Remove activity to favorites"""
-        result, error = FavoriteEntity.toggle_favorite(activity_id, profile_id)
+        result, error = Bookmark.toggle_favorite(activity_id, profile_id)
         if error: raise HTTPException(status_code=400, detail=error)
         return result
 
 class ManageFavoritesController:
     def execute(self, profile_id: int, title: Optional[str]):
         """Story 27 & 28: Search and view my favorite activities"""
-        favorites, error = FavoriteEntity.get_favorites(profile_id, title)
+        favorites, error = Bookmark.get_favorites(profile_id, title)
         if error: raise HTTPException(status_code=500, detail=error)
         return favorites
 
 class DonateToActivityController:
     def execute(self, activity_id: int, profile_id: int, donation_data: DonationRequest):
         """Core Feature: Make a donation to an activity"""
-        result, error = DonationEntity.donate_to_activity(activity_id, profile_id, donation_data)
+        result, error = Donation.donate_to_activity(activity_id, profile_id, donation_data)
         if error: raise HTTPException(status_code=400, detail=error)
         return result
 
 class SearchPastDonationsController:
     def execute(self, profile_id: int, title: Optional[str]):
         """Story 31: Search for my past donations"""
-        donations, error = DonationEntity.search_past_donations(profile_id, title)
+        donations, error = Donation.search_past_donations(profile_id, title)
         if error: raise HTTPException(status_code=500, detail=error)
         return donations
 
 class ViewPastDonationController:
     def execute(self, donation_id: int, profile_id: int):
         """Story 32: View my past donation details"""
-        donation, error = DonationEntity.view_past_donation_detail(donation_id, profile_id)
+        donation, error = Donation.view_past_donation_detail(donation_id, profile_id)
         if error: raise HTTPException(status_code=404, detail=error)
         return donation
 

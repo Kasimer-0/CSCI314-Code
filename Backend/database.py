@@ -20,4 +20,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Base class for all ORM models (used when creating tables)
 Base = declarative_base()
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 print("✅ Local PostgreSQL database connection initialized")
