@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session, relationship
 from pydantic import BaseModel
 from typing import Optional
 
-# 从基础配置导入
 from database import Base, get_db
 
 # ==========================================
