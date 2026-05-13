@@ -1,6 +1,6 @@
 from database import engine, Base
 
-# 从新的 Entity 文件夹里把所有模型导入进来，让 SQLAlchemy 认识它们
+# Import all models from the new Entity folder so that SQLAlchemy can recognize them.
 from Entities.user_account import UserAccount
 from Entities.user_profile import UserProfile
 from Entities.platform_category import Category
