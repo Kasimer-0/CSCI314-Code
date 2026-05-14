@@ -18,9 +18,9 @@ run_unit_tests:
 deploy_to_production:
   stage: deploy
   image: curlimages/curl:latest
-  [cite_start]needs: [run_unit_tests] # 只有测试通过才会执行部署 
+  [cite_start]needs: [run_unit_tests] # Deployment will only proceed if the test passes.
   script:
     - echo "Test passed, automatic deployment is being triggered via Webhook...."
     - curl -X POST $DEPLOY_WEBHOOK_URL
   only:
-    - main # 仅在合并到主分支时部署
+    - main # Deploy only when merged into the main branch
