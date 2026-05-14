@@ -1,29 +1,26 @@
-name: FastAPI CI
+stages:
+  - test
+  - deploy
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+run_unit_tests:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - pip install -r requirements.txt
+    - pip install pytest httpx
+  script:
+    - echo "正在运行自动化单元测试..."
+    - pytest tests/
+  only:
+    - main
+    - merge_requests
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11" 
-
-    - name: Install Dependencies
-      run: |
-        cd Backend
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Test Environment
-      run: |
-        echo "Dependencies installed successfully!"
+deploy_to_production:
+  stage: deploy
+  image: curlimages/curl:latest
+  [cite_start]needs: [run_unit_tests] # 只有测试通过才会执行部署 
+  script:
+    - echo "测试通过，正在通过 Webhook 触发自动部署..."
+    - curl -X POST $DEPLOY_WEBHOOK_URL
+  only:
+    - main # 仅在合并到主分支时部署
