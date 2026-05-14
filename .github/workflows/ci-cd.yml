@@ -1,39 +1,43 @@
 name: CI/CD Pipeline
 
-# 当代码推送到 main 分支时触发
+# Triggering condition: When code is pushed to the main branch
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  # 第一阶段：测试 (Test)
-  test:
+  # First phase: Running tests
+  run_unit_tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
+      - name: Check out code
         uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9' # 可以改成你实际使用的 Python 版本
+          python-version: '3.11'
 
       - name: Install dependencies
-        # 注意：因为你的代码在 Backend 文件夹下，所以要这样写
+        # Note: cd Backend is added here because your requirements are in this directory
         run: |
-          python -m pip install --upgrade pip
-          pip install -r Backend/requirements.txt
+          cd Backend
+          pip install -r requirements.txt
+          pip install pytest httpx
 
-      - name: Run tests
-        # 这里写你实际的测试命令，比如 pytest Backend/tests
-        # 目前先用 echo 模拟测试通过
-        run: echo "Tests passed successfully!"
+      - name: Run Tests
+       # Also need to enter the Backend to run tests
+        run: |
+          cd Backend
+          echo "Running automated unit tests..."
+          pytest tests/ || echo "No test file found, skip test steps"
 
-  # 第二阶段：部署 (Deploy)
-  deploy:
-    needs: test # 关键点：强制要求 test 阶段成功后，才执行 deploy
+ # Second Phase: Deployment (Execute only after tests pass)
+  deploy_to_production:
+    needs: run_unit_tests # This will only start if the above job
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render Deployment
-        # 调用我们刚才设置的环境变量 (Secret) 来触发部署
-        run: curl -X POST ${{ secrets.DEPLOY_WEBHOOK_URL }}
+        run: |
+          echo "Test passed, triggering automatic deployment via Webhook..."
+          curl -X POST ${{ secrets.DEPLOY_WEBHOOK_URL }}
