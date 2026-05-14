@@ -9,7 +9,7 @@ run_unit_tests:
     - pip install -r requirements.txt
     - pip install pytest httpx
   script:
-    - echo "正在运行自动化单元测试..."
+    - echo "Running automated unit tests..."
     - pytest tests/
   only:
     - main
@@ -20,7 +20,7 @@ deploy_to_production:
   image: curlimages/curl:latest
   [cite_start]needs: [run_unit_tests] # 只有测试通过才会执行部署 
   script:
-    - echo "测试通过，正在通过 Webhook 触发自动部署..."
+    - echo "Test passed, automatic deployment is being triggered via Webhook...."
     - curl -X POST $DEPLOY_WEBHOOK_URL
   only:
     - main # 仅在合并到主分支时部署
