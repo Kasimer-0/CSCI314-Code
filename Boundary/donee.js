@@ -83,6 +83,7 @@ function executeSearch() {
     const query = document.getElementById('searchInput').value;
     if(currentTab === 'discover') loadActivities(query);
     if(currentTab === 'favorites') loadFavorites(query);
+    if(currentTab === 'donations') loadDonations(query);
 }
 
 // ==========================================
@@ -221,8 +222,9 @@ async function submitDonation() {
 // --- DONATION HISTORY ---
 // ==========================================
 
-async function loadDonations() {
-    const res = await fetch(`${API}/donations`, { headers: getHeaders() });
+async function loadDonations(query = '') {
+    const url = `${API}/donations${query ? '?title=' + encodeURIComponent(query) : ''}`;
+    const res = await fetch(url, { headers: getHeaders() });
     const donations = await res.json();
     
     document.getElementById('donationsList').innerHTML = donations.map(d => `
