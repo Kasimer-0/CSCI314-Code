@@ -119,34 +119,51 @@ async function loadActivities(url, isOngoing) {
     
     document.getElementById('section-list').innerHTML = activities.map(a => {
         const progress = Math.min((a.current_amount / a.target_amount) * 100, 100);
+        // Safe escaping of headers to prevent single quotes from breaking HTML attributes
+        const safeTitle = a.title.replace(/'/g, "\\'");
+
         return `
-        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-4">
-                <span class="${isOngoing ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'} text-xs font-black px-3 py-1 rounded-md tracking-widest uppercase">${a.status}</span>
-                ${isOngoing ? `<button onclick="viewStats(${a.activity_id})" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg hover:bg-indigo-100 transition-colors">📊 Track Data</button>` : ''}
-            </div>
-            <h3 class="font-bold text-xl text-slate-900 mb-2 truncate">${a.title}</h3>
-            <p class="text-sm text-slate-500 line-clamp-2 mb-6 h-10">${a.description}</p>
-            <div class="mb-6">
-                <div class="flex justify-between text-xs font-bold text-slate-800 mb-2">
-                    <span>$${a.current_amount.toFixed(2)} raised</span>
-                    <span class="text-slate-400">Goal: $${a.target_amount.toFixed(2)}</span>
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="${isOngoing ? 'bg-amber-50 text-amber-600 border border-amber-200/60' : 'bg-slate-100 text-slate-500'} text-[10px] font-black px-2.5 py-1 rounded-md tracking-widest uppercase">
+                        ${a.status}
+                    </span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-2">
-                    <div class="${isOngoing ? 'bg-amber-500' : 'bg-slate-400'} h-2 rounded-full" style="width: ${progress}%"></div>
+                
+                <h3 class="font-bold text-xl text-slate-900 mb-2 truncate" title="${a.title}">${a.title}</h3>
+                <p class="text-sm text-slate-500 line-clamp-2 mb-6 h-10">${a.description}</p>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                        <span>$${a.current_amount.toFixed(2)} raised</span>
+                        <span class="text-slate-400">Goal: $${a.target_amount.toFixed(2)}</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="${isOngoing ? 'bg-amber-500' : 'bg-slate-400'} h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                    </div>
                 </div>
             </div>
-            ${isOngoing ? `
-            <div class="flex gap-2 border-t border-slate-100 pt-4">
-                <button onclick="updateTitle(${a.activity_id}, '${a.title}')" class="flex-1 text-sm font-bold text-slate-700 bg-slate-100 py-2 rounded-xl hover:bg-slate-200 transition-colors">Edit Title</button>
-                <button onclick="suspendActivity(${a.activity_id})" class="flex-1 text-sm font-bold text-rose-600 bg-rose-50 py-2 rounded-xl hover:bg-rose-100 transition-colors">Suspend</button>
-            </div>` : `
-            <div class="border-t border-slate-100 pt-4 text-center">
-                <button onclick="viewPastDetail(${a.activity_id})" class="text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors">View Full Archive</button>
+
+            <div class="border-t border-slate-100 pt-4">
+                ${isOngoing ? `
+                <div class="space-y-2">
+                    <div class="flex gap-2">
+                        <button onclick="viewOngoingDetail(${a.activity_id})" class="flex-1 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 py-2.5 rounded-xl hover:bg-slate-100 transition-all active:scale-95">View Details</button>
+                        <button onclick="viewStats(${a.activity_id})" class="flex-1 text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 py-2.5 rounded-xl hover:bg-amber-100 transition-all active:scale-95">Stats dashboard</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateTitle(${a.activity_id}, '${safeTitle}')" class="flex-1 text-xs font-bold text-blue-600 bg-blue-50/60 py-2 rounded-xl hover:bg-blue-100 transition-colors">Edit Title</button>
+                        <button onclick="suspendActivity(${a.activity_id})" class="flex-1 text-xs font-bold text-rose-600 bg-rose-50/60 py-2 rounded-xl hover:bg-rose-100 transition-colors">Suspend</button>
+                    </div>
+                </div>
+                ` : `
+                <button onclick="viewPastDetail(${a.activity_id})" class="w-full text-center text-sm font-bold text-slate-500 bg-slate-50 border border-slate-200 py-2.5 rounded-xl hover:bg-slate-200 hover:text-slate-800 transition-all">View Full Archive</button>
+                `}
             </div>
-            `}
         </div>
-    `}).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No campaigns found.</div>`;
+        `;
+    }).join('') || `<div class="col-span-full text-center py-20 text-slate-400 font-bold text-lg">No campaigns found.</div>`;
 }
 
 // --- CREATE ACTIVITY (Story 13) ---
@@ -172,6 +189,40 @@ async function createActivity() {
     } else {
         const data = await res.json();
         showMessage("Publish Failed", data.detail || "An error occurred during publication.", true);
+    }
+}
+
+// --- VIEW ONGOING ACTIVITY DETAIL (Story 14) ---
+async function viewOngoingDetail(id) {
+    try {
+        // Request the Story 14 API from the backend.
+        const res = await fetch(`${API}/activities/${id}`, { headers: getHeaders() });
+        const data = await res.json();
+
+        if (res.ok) {
+            // Reuse the existing detailModal structure and dynamically populate the data
+            document.getElementById('detailTitle').innerText = data.title;
+            document.getElementById('detailDesc').innerText = data.description;
+            document.getElementById('detailStatus').innerText = data.status;
+            document.getElementById('detailCurrent').innerText = `$${data.current_amount.toFixed(2)}`;
+            document.getElementById('detailGoal').innerText = `$${data.target_amount.toFixed(2)}`;
+            
+            const date = new Date(data.created_at);
+            document.getElementById('detailDate').innerText = date.toLocaleDateString('en-SG', { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            });
+
+            // Calculate progress bar
+            const progress = Math.min((data.current_amount / data.target_amount) * 100, 100);
+            document.getElementById('detailProgress').style.width = `${progress}%`;
+
+            // Remove hidden class, display the elegant modal
+            document.getElementById('detailModal').classList.remove('hidden');
+        } else {
+            showMessage("Error", data.detail || "Failed to load campaign details.", true);
+        }
+    } catch (err) {
+        showMessage("Connection Error", "Cannot fetch details from server.", true);
     }
 }
 
